@@ -1,0 +1,24 @@
+name: Unzip clean project
+on:
+  workflow_dispatch:
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip project
+        run: |
+          curl -sL -o project.zip "https://muse.ai/files/1396372950222919/1495377699125327/tqeopm09yecm17qfqeptuew1/railsync2-clean.zip"
+          unzip -o project.zip
+          rm project.zip
+          rm -rf .github
+          ls
+      - name: Commit clean tree
+        run: |
+          git config user.name "Rishabh Sharma"
+          git config user.email "189544159+r1shabhsharma05@users.noreply.github.com"
+          git add -A
+          git commit -m "railsync 2.0 — complete project"
+          git push
