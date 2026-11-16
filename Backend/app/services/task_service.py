@@ -18,7 +18,17 @@ def ingest_task(db: Session, request: TaskCreateRequest) -> tuple[TaskResponse, 
     """
     segment = repo.get_segment(db, request.segment_id)
     if segment is None:
-        segment = repo.upsert_segment(db, segment_id=request.segment_id)
+        # Segment has NOT NULL columns (division, asset_type, length_km,
+        # age_years) with no defaults, so a bare segment_id insert 500s.
+        # Local-run fix: auto-created segments get neutral defaults.
+        segment = repo.upsert_segment(
+            db,
+            segment_id=request.segment_id,
+            division="Delhi",
+            asset_type="TRACK",
+            length_km=1.0,
+            age_years=10.0,
+        )
 
     kwargs = {
         "task_id": request.task_id,
@@ -67,4 +77,3 @@ def _task_to_dict(t) -> dict:
         "preferred_window_start": t.preferred_window_start,
         "preferred_window_end": t.preferred_window_end,
     }
-
