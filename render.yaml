@@ -36,8 +36,8 @@ services:
         sync: false
 
       - key: CORS_ORIGINS
-        value: "https://railsync.vercel.app,https://railsync-api.onrender.com"
-        # ↑ Update with your actual Vercel frontend URL after deploying
+        value: "https://railsync2-frontend.pages.dev,https://railsync.vercel.app,https://railsync-api.onrender.com"
+        # live Cloudflare Pages frontend first
 
       - key: LOG_LEVEL
         value: INFO
