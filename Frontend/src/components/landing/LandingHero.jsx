@@ -1,110 +1,191 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useScrollReveal } from './useScrollReveal';
+import { LigIcon } from './icons.jsx';
+import { ImageGallery } from './sphere/ImageGallery.jsx';
 
-const PIPELINE = ['PREDICT', 'DETECT', 'OPTIMIZE', 'EXPLAIN', 'REPLAN'];
+/**
+ * Hero — Adomate's hero shape, RailSync's content and sphere.
+ * Eyebrow, one huge headline, one sentence, two pill actions, stats with
+ * icons; on the right the orbit sphere (website-to-code episode 002)
+ * with light cards, concentric arc rings behind it. Drag to orbit, scroll
+ * to roll, arrow keys work too, morphs into a helix. Click a card and the
+ * panel under the sphere says what it is.
+ */
+
+const TRACK_PHOTO = '/images/close-up-of-railway-track.jpg';
+
+const SPHERE_ITEMS = [
+  { id: 'seg-a', icon: 'verified_user', title: 'Segment A', line: 'Risk 0.15 · Low',
+    detail: 'Segment A — Kanpur–Etawah. Risk 0.15, low. No block needed this week; the model keeps watching it.',
+    announce: 'Segment A, low risk.' },
+  { id: 'seg-b', icon: 'warning', title: 'Segment B', line: 'Risk 0.72 · High',
+    detail: 'Segment B — Etawah–Tundla. Risk 0.72, high. A 6-hour block is already proposed for Thursday.',
+    announce: 'Segment B, high risk.' },
+  { id: 'seg-c', icon: 'check_circle', title: 'Segment C', line: 'Risk 0.28 · Watch',
+    detail: 'Segment C — Tundla–Aligarh. Risk 0.28, watch. One inspection task queued, no block yet.',
+    announce: 'Segment C, watch.' },
+  { id: 'predict', icon: 'psychology', title: 'Predict', line: 'ML scores every segment',
+    detail: 'Predict — the model scores every segment’s failure risk from track, weather and traffic history.',
+    announce: 'Predict: the model scores every segment.' },
+  { id: 'detect', icon: 'radar', title: 'Detect', line: 'Conflicts surface early',
+    detail: 'Detect — overlapping blocks and department clashes surface before the plan is built.',
+    announce: 'Detect: conflicts surface early.' },
+  { id: 'optimise', icon: 'memory', title: 'Optimise', line: 'CP-SAT solves the plan',
+    detail: 'Optimise — Google OR-Tools CP-SAT solves the whole week under hard constraints.',
+    announce: 'Optimise: CP-SAT solves the plan.' },
+  { id: 'explain', icon: 'assignment', title: 'Explain', line: 'Every decision justified',
+    detail: 'Explain — every scheduled block carries its reason in plain words, not a bare score.',
+    announce: 'Explain: every decision is justified.' },
+  { id: 'replan', icon: 'autorenew', title: 'Replan', line: 'Disruptions re-planned',
+    detail: 'Replan — a late train or a failed asset re-plans the week in minutes, not a meeting.',
+    announce: 'Replan: disruptions re-planned.' },
+  { id: 'twin', icon: 'developer_board', title: 'Digital Twin', line: 'The corridor, live',
+    detail: 'Digital Twin — the corridor as a living map: every segment, task and block in one view.',
+    announce: 'Digital Twin: the corridor, live.' },
+  { id: 'segments', icon: 'route', title: '46 segments', line: 'Delhi–Kanpur, mapped',
+    detail: '46 segments — the whole Delhi–Kanpur corridor, mapped and scored.',
+    announce: '46 segments on the Delhi Kanpur corridor.' },
+  { id: 'depts', icon: 'groups_3', title: '3 departments', line: 'One shared plan',
+    detail: '3 departments — engineering, operations and traffic negotiate on one shared plan.',
+    announce: '3 departments on one shared plan.' },
+  { id: 'corridor', icon: null, title: 'Delhi – Kanpur', line: 'The corridor',
+    detail: 'Delhi–Kanpur — the corridor RailSync plans, end to end.',
+    announce: 'Delhi Kanpur corridor.', photo: TRACK_PHOTO },
+];
+
+function sphereCard(item) {
+  return (
+    <div className="ig-card">
+      {item.photo ? (
+        <div className="ig-card-photo" style={{ backgroundImage: `url(${item.photo})` }} />
+      ) : (
+        <span className="ig-card-icon">
+          <LigIcon name={item.icon} />
+        </span>
+      )}
+      <span className="ig-card-title">{item.title}</span>
+      <span className="ig-card-line">{item.line}</span>
+    </div>
+  );
+}
+
+function useImageHeight() {
+  const [h, setH] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 640 ? 104 : 150,
+  );
+  useEffect(() => {
+    const onResize = () =>
+      setH(window.innerWidth < 640 ? 104 : 150);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return h;
+}
 
 export default function LandingHero() {
+  const heroRef = useScrollReveal();
+  const [mode, setMode] = useState('sphere');
+  const [selectedId, setSelectedId] = useState('seg-b');
+  const imageHeight = useImageHeight();
+
+  const items = SPHERE_ITEMS.map((it) => ({
+    id: it.id,
+    node: sphereCard(it),
+    announce: it.announce,
+  }));
+  const selected = SPHERE_ITEMS.find((it) => it.id === selectedId) || SPHERE_ITEMS[1];
+
   return (
-    <section className="relative pt-28 pb-24 md:pt-36 md:pb-32 bg-[#080f1d] text-white border-b border-[#1a2942] overflow-hidden">
-
-      {/* ── Background grid ── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, rgba(26,41,66,0.3) 1px, transparent 1px),' +
-            'linear-gradient(to bottom, rgba(26,41,66,0.3) 1px, transparent 1px)',
-          backgroundSize: '3.5rem 3.5rem',
-          maskImage: 'radial-gradient(ellipse 80% 70% at 50% 20%, #000 55%, transparent 100%)',
-        }}
-      />
-
-      {/* ── Ambient glow ── */}
-      <div
-        className="absolute pointer-events-none rs-glow-orb"
-        style={{
-          top: '30%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '640px', height: '280px',
-          background: 'radial-gradient(ellipse, rgba(22,37,61,0.6) 0%, transparent 70%)',
-          borderRadius: '50%',
-          filter: 'blur(40px)',
-        }}
-      />
-
-      {/* ── Animated pipeline rail line behind hero ── */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#394761] to-transparent pointer-events-none" />
-      <div className="absolute bottom-0 left-0 h-px overflow-hidden w-full pointer-events-none">
-        <div
-          className="absolute top-0 h-px w-20 bg-gradient-to-r from-transparent via-[#b8c7e6] to-transparent"
-          style={{ animation: 'scanLine 5s linear infinite' }}
-        />
-      </div>
-
-      {/* ── Content ── */}
-      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-
-        {/* Badge */}
-        <div className="rs-content-1 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0c172b]/90 border border-[#2a3c5a] mb-7 backdrop-blur-sm">
-          <span className="w-2 h-2 rounded-full bg-[#3c9e57] rs-status-live shrink-0" />
-          <span className="font-label-caps text-[10px] uppercase tracking-widest text-[#b8c7e6] font-bold">
-            Smart India Hackathon &nbsp;·&nbsp; Ministry of Railways
-          </span>
-        </div>
-
-        {/* ── PRIMARY BRAND — RAILSYNC ── */}
-        <h1
-          className="rs-wordmark-enter font-black leading-none tracking-[-0.045em] text-white mb-5 select-none"
-          style={{ fontSize: 'clamp(4rem, 14vw, 8rem)' }}
-        >
-          RAILSYNC
-        </h1>
-
-        {/* Product subtitle — visually subordinate */}
-        <p className="rs-content-2 text-lg sm:text-2xl md:text-3xl font-semibold text-[#dfe9f5] tracking-tight mb-4 leading-snug">
-          AI-Powered Automatic Block Planning &amp; Digital Twin
-        </p>
-
-        {/* Tagline */}
-        <p className="rs-content-3 text-sm sm:text-base text-[#7e8ca9] max-w-2xl mx-auto leading-relaxed mb-9">
-          Predict failures. Detect conflicts. Optimize maintenance blocks.
-          Explain every decision. Re-plan when conditions change.
-        </p>
-
-        {/* Pipeline chain */}
-        <div className="rs-content-4 flex flex-wrap items-center justify-center gap-1.5 mb-10 font-label-caps text-[10px] font-bold uppercase tracking-wider">
-          {PIPELINE.map((stage, idx) => (
-            <React.Fragment key={stage}>
-              <span className="px-3 py-1.5 rounded bg-[#0c172b] border border-[#2a3c5a] text-[#b8c7e6]">
-                {stage}
+    <section className="relative overflow-hidden" style={{ background: 'var(--bg)' }}>
+      <div className="rs-wrap pt-14 md:pt-20 pb-16 md:pb-24">
+        <div className="grid md:grid-cols-12 gap-10 md:gap-6 items-center">
+          {/* Copy */}
+          <div ref={heroRef} className="rs-reveal md:col-span-5">
+            <p className="rs-eyebrow">AI railway maintenance planning</p>
+            <h1 className="font-display rs-hero-h1 leading-[0.88] text-[var(--ink)] max-w-[6em] mt-5">
+              Every block planned.
+            </h1>
+            <p className="mt-6 text-[18px] leading-[1.5] text-[var(--muted)] max-w-[40ch]">
+              RailSync predicts failures, spots conflicts and schedules maintenance
+              with CP-SAT — then explains every decision.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link to="/login" className="rs-btn">
+                Launch RailSync dashboard →
+              </Link>
+              <a href="#how-it-works" className="rs-btn rs-btn-ghost">
+                See how it works
+              </a>
+            </div>
+            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3">
+              <span className="flex items-center gap-2 text-[15px] font-semibold text-[var(--ink)]">
+                <span className="rs-icon-chip" style={{ width: 32, height: 32 }}>
+                  <LigIcon name="route" />
+                </span>
+                46 segments
               </span>
-              {idx < PIPELINE.length - 1 && (
-                <span className="text-[#2a3c5a] text-base leading-none select-none">›</span>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+              <span className="flex items-center gap-2 text-[15px] font-semibold text-[var(--ink)]">
+                <span className="rs-icon-chip" style={{ width: 32, height: 32 }}>
+                  <LigIcon name="groups_3" />
+                </span>
+                3 departments
+              </span>
+              <span className="flex items-center gap-2 text-[15px] font-semibold text-[var(--ink)]">
+                <span className="rs-icon-chip" style={{ width: 32, height: 32 }}>
+                  <LigIcon name="memory" />
+                </span>
+                CP-SAT solver
+              </span>
+            </div>
+          </div>
 
-        {/* CTAs */}
-        <div className="rs-content-5 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            to="/login"
-            className="group w-full sm:w-auto rs-btn-primary inline-flex items-center justify-center gap-2.5 px-7 py-3 rounded text-[13px] font-code-sm font-bold uppercase tracking-wider"
-          >
-            <span>Launch RailSync Dashboard</span>
-            <span className="rs-arrow-icon material-symbols-outlined text-[17px]">arrow_forward</span>
-          </Link>
-          <a
-            href="#pipeline"
-            className="group w-full sm:w-auto rs-btn-secondary inline-flex items-center justify-center gap-2 px-7 py-3 rounded text-[13px] font-code-sm font-semibold tracking-wide"
-          >
-            <span>Explore How It Works</span>
-            <span className="material-symbols-outlined text-[16px] transition-transform duration-220 group-hover:translate-y-0.5">
-              arrow_downward
-            </span>
-          </a>
+          {/* Sphere */}
+          <div className="md:col-span-7">
+            <div className="rs-shutter relative h-[520px] md:h-[720px]">
+              <div className="rs-arcs" aria-hidden="true">
+                <i style={{ width: 640, height: 640, right: -80, top: 40, borderColor: 'rgba(247,148,29,0.45)' }} />
+                <i style={{ width: 880, height: 880, right: -200, top: -80, borderColor: 'rgba(247,148,29,0.28)' }} />
+                <i style={{ width: 1120, height: 1120, right: -320, top: -200, borderColor: 'rgba(31,43,77,0.14)' }} />
+              </div>
+              <div className="rs-sphere-glow" aria-hidden="true" />
+              <ImageGallery
+                items={items}
+                mode={mode}
+                imageHeight={imageHeight}
+                ratio={0.75}
+                depthFade={0.18}
+                preloadImages={[TRACK_PHOTO]}
+                onSelect={setSelectedId}
+              />
+            </div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-[14px] text-[var(--muted)]">
+                Drag to orbit · Scroll to roll · Arrow keys work too
+              </p>
+              <div className="rs-mode-toggle" role="group" aria-label="Sphere arrangement">
+                <button
+                  type="button"
+                  aria-pressed={mode === 'sphere'}
+                  onClick={() => setMode('sphere')}
+                >
+                  Sphere
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={mode === 'spiral'}
+                  onClick={() => setMode('spiral')}
+                >
+                  Helix
+                </button>
+              </div>
+            </div>
+            <p className="mt-4 text-[15px] leading-[1.5] text-[var(--ink)]" aria-live="polite">
+              <span className="font-semibold">{selected.title} — </span>
+              {selected.detail}
+            </p>
+          </div>
         </div>
-
       </div>
     </section>
   );

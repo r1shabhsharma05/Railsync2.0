@@ -1,15 +1,20 @@
 import React, { useEffect } from 'react';
 import '../components/landing/landingAnimations.css';
-import LandingNavbar       from '../components/landing/LandingNavbar.jsx';
-import LandingHero         from '../components/landing/LandingHero.jsx';
-import LandingProblem      from '../components/landing/LandingProblem.jsx';
-import LandingHowItWorks   from '../components/landing/LandingHowItWorks.jsx';
-import LandingCapabilities from '../components/landing/LandingCapabilities.jsx';
-import LandingDigitalTwin  from '../components/landing/LandingDigitalTwin.jsx';
-import LandingOptimizer    from '../components/landing/LandingOptimizer.jsx';
-import LandingWhatIf       from '../components/landing/LandingWhatIf.jsx';
-import LandingCTA          from '../components/landing/LandingCTA.jsx';
-import LandingFooter       from '../components/landing/LandingFooter.jsx';
+import LandingAnnouncement  from '../components/landing/LandingAnnouncement.jsx';
+import LandingNavbar        from '../components/landing/LandingNavbar.jsx';
+import LandingHero          from '../components/landing/LandingHero.jsx';
+import LandingBuiltFor      from '../components/landing/LandingBuiltFor.jsx';
+import LandingMarquee       from '../components/landing/LandingMarquee.jsx';
+import LandingProblem       from '../components/landing/LandingProblem.jsx';
+import LandingPlatform      from '../components/landing/LandingPlatform.jsx';
+import LandingHowItWorks    from '../components/landing/LandingHowItWorks.jsx';
+import LandingCapabilities  from '../components/landing/LandingCapabilities.jsx';
+import LandingDigitalTwin   from '../components/landing/LandingDigitalTwin.jsx';
+import LandingOptimizer     from '../components/landing/LandingOptimizer.jsx';
+import LandingWhatIf        from '../components/landing/LandingWhatIf.jsx';
+import LandingTransparency  from '../components/landing/LandingTransparency.jsx';
+import LandingCTA           from '../components/landing/LandingCTA.jsx';
+import LandingFooter        from '../components/landing/LandingFooter.jsx';
 
 export default function LandingPage() {
   useEffect(() => {
@@ -17,34 +22,49 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary overflow-x-hidden font-sans">
+    <div className="rs-page min-h-screen overflow-x-hidden">
+
+      {/* Announcement bar */}
+      <LandingAnnouncement />
 
       {/* Navigation */}
       <LandingNavbar />
 
       <main>
-        {/* 1. Hero — RAILSYNC brand + pipeline chain + CTAs */}
+        {/* 1. Hero — the corridor's world on an orbit sphere */}
         <LandingHero />
 
-        {/* 2. The Problem — 3 coordination challenges */}
+        {/* 2. Built for — SIH 2.0, Ministry of Railways, OR-Tools CP-SAT */}
+        <LandingBuiltFor />
+
+        {/* 3. The plan, at a glance — stage + segment cards */}
+        <LandingMarquee />
+
+        {/* 4. The Problem — statement with inline photographs */}
         <LandingProblem />
 
-        {/* 3. How RailSync Works — 5-stage pipeline */}
+        {/* 5. The Platform — centred intro + three numbered steps */}
+        <LandingPlatform />
+
+        {/* 6. How RailSync Works — five fields, one request further along */}
         <LandingHowItWorks />
 
-        {/* 4. Key Capabilities — 8 real capabilities */}
+        {/* 7. Key Capabilities — giant command list */}
         <LandingCapabilities />
 
-        {/* 5. Digital Twin — simulated corridor visualisation */}
+        {/* 8. Digital Twin — accent feature, twin fragment on the right */}
         <LandingDigitalTwin />
 
-        {/* 6. Optimisation Preview — CP-SAT flow */}
+        {/* 9. Optimisation — solver facts on tiles */}
         <LandingOptimizer />
 
-        {/* 7. What-If Replanning — scenario sandbox */}
+        {/* 10. What-If Replanning — run-in column */}
         <LandingWhatIf />
 
-        {/* 8. Final CTA */}
+        {/* 11. Human in the loop — accent feature, corridor photo */}
+        <LandingTransparency />
+
+        {/* 12. Final CTA — big white card, first step already open */}
         <LandingCTA />
       </main>
 

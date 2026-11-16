@@ -1,131 +1,139 @@
 import React from 'react';
 import { useScrollReveal } from './useScrollReveal';
+import { LigIcon } from './icons.jsx';
 
-const STEPS = [
+/* One block request, further along in every field.
+   Fields run light → dark navy → accent, so the plan's progress reads as
+   the page deepening toward the replan. */
+const STAGES = [
   {
-    num: '01',
-    id: 'PREDICT',
-    icon: 'insights',
-    heading: 'Layer-1 ML Risk Prediction',
-    detail:
-      'A trained ML model estimates failure risk, expected maintenance duration, and uncertainty for each track segment — helping prioritise which blocks need attention and when.',
-    badgeText: 'ML Layer',
-    badgeStyle: 'bg-[#16253d] border-[#394761] text-[#b8c7e6]',
-  },
-  {
-    num: '02',
-    id: 'DETECT',
-    icon: 'radar',
-    heading: 'Conflict Detection',
-    detail:
-      'Proposed maintenance windows are checked against timetabled passenger and freight train paths. Every headway or safety constraint violation is flagged before scheduling.',
-    badgeText: 'Safety Check',
-    badgeStyle: 'bg-[#fef7e0] border-[#fdd663] text-[#b06000]',
-  },
-  {
-    num: '03',
-    id: 'OPTIMIZE',
-    icon: 'memory',
-    heading: 'CP-SAT Schedule Optimisation',
-    detail:
-      'Google OR-Tools CP-SAT finds a feasible maintenance schedule that satisfies hard constraints (safety, headways) and optimises soft objectives (urgency, resource utilisation).',
-    badgeText: 'OR-Tools CP-SAT',
-    badgeStyle: 'bg-[#002c0f] border-[#3c9e57] text-[#95f8a7]',
-  },
-  {
-    num: '04',
-    id: 'EXPLAIN',
+    stage: 'Predict',
     icon: 'psychology',
-    heading: 'Explainable Decisions',
-    detail:
-      'Every scheduled or deferred task includes a plain-language explanation: why it was prioritised, which constraints influenced the decision, and what trade-offs were made.',
-    badgeText: 'Explainability',
-    badgeStyle: 'bg-surface-container border-surface-container-high text-primary',
+    clause: 'First the risk is scored.',
+    detail: 'The ML model scores failure risk for every segment.',
+    rows: [
+      { label: 'Request', value: 'Track tamping' },
+      { label: 'Segment', value: 'B · Civil' },
+    ],
+    field: 'bg-[var(--raised)] text-[var(--ink)]',
+    clauseColor: 'text-[var(--ink)]',
   },
   {
-    num: '05',
-    id: 'REPLAN',
-    icon: 'replay_circle_filled',
-    heading: 'What-If Re-optimisation',
-    detail:
-      'When an emergency defect, disruption, or changed constraint is injected, the solver re-optimises the affected schedule — helping evaluate the impact before committing to a change.',
-    badgeText: 'Scenario Analysis',
-    badgeStyle: 'bg-[#ba1a1a]/10 border-[#ba1a1a]/30 text-[#ba1a1a]',
+    stage: 'Detect',
+    icon: 'radar',
+    clause: 'Then conflicts are flagged.',
+    detail: 'Windows are checked against timetabled train paths.',
+    rows: [
+      { label: 'Request', value: 'Track tamping' },
+      { label: 'Segment', value: 'B · Civil' },
+      { label: 'Risk', value: '0.72 — maintenance due' },
+    ],
+    field: 'bg-white text-[var(--ink)]',
+    clauseColor: 'text-[var(--ink)]',
+  },
+  {
+    stage: 'Optimise',
+    icon: 'memory',
+    clause: 'Then a window is found.',
+    detail: 'CP-SAT finds a feasible schedule under hard constraints.',
+    rows: [
+      { label: 'Request', value: 'Track tamping' },
+      { label: 'Segment', value: 'B · Civil' },
+      { label: 'Risk', value: '0.72 — maintenance due' },
+      { label: 'Conflicts', value: '2 flagged' },
+    ],
+    field: 'bg-[#24365e] text-[#e8ecf5]',
+    clauseColor: 'text-[#e8ecf5]',
+  },
+  {
+    stage: 'Explain',
+    icon: 'assignment',
+    clause: 'Then it is explained.',
+    detail: 'Every decision carries a plain-language reason.',
+    rows: [
+      { label: 'Request', value: 'Track tamping' },
+      { label: 'Segment', value: 'B · Civil' },
+      { label: 'Risk', value: '0.72 — maintenance due' },
+      { label: 'Conflicts', value: '2 flagged' },
+      { label: 'Window', value: 'Block B-12 · 02:00–04:30' },
+    ],
+    field: 'bg-[#1f2b4d] text-[#e8ecf5]',
+    clauseColor: 'text-[#e8ecf5]',
+  },
+  {
+    stage: 'Replan',
+    icon: 'autorenew',
+    clause: 'Then the plan changes.',
+    detail: 'A disruption re-runs the solver before you commit.',
+    rows: [
+      { label: 'Request', value: 'Track tamping' },
+      { label: 'Segment', value: 'B · Civil' },
+      { label: 'Risk', value: '0.72 — maintenance due' },
+      { label: 'Conflicts', value: '2 flagged' },
+      { label: 'Window', value: 'Block B-12 · 02:00–04:30' },
+      { label: 'Reason', value: 'Headway kept, crew free' },
+    ],
+    field: 'bg-[var(--accent)] text-[var(--accent-ink)]',
+    clauseColor: 'text-[var(--accent-ink)]',
   },
 ];
 
+/**
+ * How it works — One card, four fields, adapted to five (the pipeline has
+ * five stages; the geometry is kept, the count follows the content).
+ * Five flat fields, no gaps; the same request card appears in each, further
+ * along every time; the clause at the foot of each field names its moment.
+ */
 export default function LandingHowItWorks() {
   const sectionRef = useScrollReveal();
 
   return (
-    <section id="pipeline" className="py-20 bg-surface border-b border-surface-container-high scroll-mt-12 relative">
-      <span id="how-it-works" className="absolute -top-12" />
-      <div ref={sectionRef} className="rs-reveal max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="pipeline" className="bg-[var(--bg)]">
+      <div ref={sectionRef} className="rs-reveal flex flex-col md:flex-row w-full">
+        {STAGES.map((s, idx) => (
+          <div
+            key={s.stage}
+            className={`relative ${s.field} w-full md:w-[20vw] h-[64svh] md:h-[84svh] shrink-0`}
+          >
+            {/* Heading, first field only */}
+            {idx === 0 && (
+              <h2 className="font-display text-[24px] md:text-[clamp(22px,2vw,32px)] leading-[1.1] px-5 md:px-7 pt-6 md:pt-7">
+                From prediction to action
+              </h2>
+            )}
 
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-surface-container border border-surface-container-high text-primary font-label-caps text-[10px] font-bold uppercase mb-4">
-            <span className="material-symbols-outlined text-[14px]">route</span>
-            <span>How RailSync Works</span>
-          </div>
-          <h2 className="font-headline-xl text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight mb-3">
-            From Prediction to Action
-          </h2>
-          <p className="font-body-lg text-secondary text-sm sm:text-base leading-relaxed">
-            Five integrated stages transform maintenance requests and risk signals into a conflict-free, explainable block schedule.
-          </p>
-        </div>
+            {/* Clause */}
+            <p
+              className={`font-display text-[24px] md:text-[clamp(22px,2vw,32px)] leading-[1.1] px-5 md:px-7 pt-6 md:pt-0 md:absolute md:bottom-7 md:left-0 md:right-0 ${s.clauseColor}`}
+            >
+              {s.clause}
+            </p>
 
-        {/* Vertical pipeline list */}
-        <div className="max-w-2xl mx-auto">
-          {STEPS.map((step, idx) => (
-            <div key={step.id}>
-              {/* Step card */}
-              <div className="rs-card rounded bg-surface-container-lowest border border-surface-container-high p-5 shadow-sm flex items-start gap-4">
-                {/* Icon box */}
-                <div className="w-10 h-10 shrink-0 rounded bg-[#0c172b] border border-[#1a2942] flex items-center justify-center">
-                  <span className="material-symbols-outlined text-xl text-[#95f8a7]">{step.icon}</span>
-                </div>
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <span className="font-label-caps text-[9px] font-bold tracking-wider text-secondary uppercase">
-                      Step {step.num}
-                    </span>
-                    <span className="font-code-sm text-xs font-bold text-primary tracking-wider">
-                      [{step.id}]
-                    </span>
-                    <span className={`font-label-caps text-[9px] font-bold px-2 py-0.5 rounded border ${step.badgeStyle}`}>
-                      {step.badgeText}
-                    </span>
-                  </div>
-                  <h3 className="font-headline-sm text-sm font-bold text-on-surface mb-1 leading-snug">
-                    {step.heading}
-                  </h3>
-                  <p className="font-body-sm text-xs text-secondary leading-relaxed">
-                    {step.detail}
-                  </p>
-                </div>
+            {/* The request card, further along every time */}
+            <div
+              data-ui
+              className="rs-frag w-[240px] p-4 ml-5 md:ml-0 mt-8 md:mt-0 md:absolute md:left-1/2 md:-translate-x-1/2 md:top-[38%] transition-transform duration-150 hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 md:motion-reduce:hover:-translate-x-1/2"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <span className="rs-icon-chip" style={{ width: 28, height: 28 }}>
+                  <LigIcon name={s.icon} />
+                </span>
+                <span className="rs-frag-label">{s.stage}</span>
               </div>
-
-              {/* Animated connector */}
-              {idx < STEPS.length - 1 && (
-                <div className="relative flex justify-start items-center py-1.5 pl-5 overflow-hidden">
-                  <div className="relative w-px h-5 bg-surface-container-high overflow-visible">
-                    <span
-                      className="rs-pipe-dot bg-[#b8c7e6]"
-                      style={{ animationDelay: `${idx * 0.56}s` }}
-                    />
+              <div className="space-y-2">
+                {s.rows.map((r) => (
+                  <div key={r.label} className="flex justify-between gap-3 text-[13px] leading-[1.4]">
+                    <span className="text-[var(--muted)] shrink-0">{r.label}</span>
+                    <span className="font-semibold text-[var(--ink)] text-right">{r.value}</span>
                   </div>
-                  <span className="material-symbols-outlined text-lg text-surface-container-high ml-0.5">
-                    arrow_downward
-                  </span>
-                </div>
-              )}
+                ))}
+              </div>
+              <p className="mt-3 pt-3 text-[13px] leading-[1.5] text-[var(--muted)]">
+                {s.detail}
+              </p>
             </div>
-          ))}
-        </div>
-
+          </div>
+        ))}
       </div>
     </section>
   );

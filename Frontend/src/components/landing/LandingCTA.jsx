@@ -1,61 +1,89 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useScrollReveal } from './useScrollReveal';
 
+/**
+ * CTA — Adomate's big white card on the light page, arc rings behind it.
+ * Copy on the left, the product's first screen already open on the right:
+ * name a corridor, pick a week, and the button carries both into the
+ * dashboard.
+ */
 export default function LandingCTA() {
   const sectionRef = useScrollReveal();
+  const [corridor, setCorridor] = useState('Delhi – Kanpur');
+  const [week, setWeek] = useState('This week');
+
+  const loginTo =
+    '/login?corridor=' +
+    encodeURIComponent(corridor.trim() || 'Delhi – Kanpur') +
+    '&week=' +
+    encodeURIComponent(week);
 
   return (
-    <section className="py-20 bg-surface-container-lowest">
-      <div ref={sectionRef} className="rs-reveal max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="rounded bg-[#0c172b] border border-[#1a2942] p-8 sm:p-12 text-center max-w-3xl mx-auto shadow-lg relative overflow-hidden">
-
-          {/* Subtle grid overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage:
-                'linear-gradient(to right, #182844 1px, transparent 1px), linear-gradient(to bottom, #182844 1px, transparent 1px)',
-              backgroundSize: '3rem 3rem',
-              opacity: 0.2,
-            }}
-          />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[200px] bg-[#16253d]/30 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#182844] border border-[#394761] text-[#b8c7e6] font-label-caps text-[10px] font-bold uppercase tracking-wider mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3c9e57] rs-status-live" />
-              <span>RailSync &nbsp;·&nbsp; Indian Railways AI Platform</span>
-            </div>
-
-            {/* Heading */}
-            <h2 className="font-headline-xl text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight leading-tight mb-4">
-              From Prediction to Action
+    <section className="relative overflow-hidden bg-[var(--bg)]">
+      <div className="rs-arcs" aria-hidden="true">
+        <i style={{ width: 700, height: 700, left: -180, bottom: -320, borderColor: 'rgba(247,148,29,0.4)' }} />
+        <i style={{ width: 980, height: 980, left: -320, bottom: -460, borderColor: 'rgba(247,148,29,0.25)' }} />
+        <i style={{ width: 1260, height: 1260, left: -460, bottom: -600, borderColor: 'rgba(31,43,77,0.12)' }} />
+      </div>
+      <div
+        ref={sectionRef}
+        className="rs-reveal rs-wrap relative py-20 md:py-28"
+      >
+        <div className="rs-frag-light !rounded-[24px] p-8 md:p-12 grid md:grid-cols-2 gap-10 md:gap-14 items-center">
+          {/* Closing line */}
+          <div>
+            <p className="rs-eyebrow">Start today</p>
+            <h2 className="font-display rs-head leading-[0.95] text-[var(--ink)] mt-5">
+              Plan the next block.
             </h2>
-
-            {/* Description */}
-            <p className="font-body-lg text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl mx-auto mb-8">
-              RailSync brings predictive intelligence, conflict detection, and constraint-based optimisation into one explainable maintenance planning workflow.
+            <p className="mt-5 text-[17px] leading-[1.6] text-[var(--muted)] max-w-[40ch]">
+              Type a corridor, pick a week, and the dashboard opens on your
+              first plan.
             </p>
+            <a href="#how-it-works" className="inline-block mt-6 text-[15px] font-semibold text-[var(--ink)] underline underline-offset-4">
+              See how it works →
+            </a>
+          </div>
 
-            {/* CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Link
-                to="/login"
-                className="group w-full sm:w-auto rs-btn-primary inline-flex items-center justify-center gap-2.5 px-8 py-3 rounded text-[13px] font-code-sm font-bold uppercase tracking-wider shadow-sm"
-              >
-                <span>Launch Operations Dashboard</span>
-                <span className="rs-arrow-icon material-symbols-outlined text-[17px]">arrow_forward</span>
-              </Link>
-              <Link
-                to="/login"
-                className="group w-full sm:w-auto rs-btn-secondary inline-flex items-center justify-center gap-2 px-7 py-3 rounded text-[13px] font-code-sm font-semibold tracking-wide"
-              >
-                <span className="material-symbols-outlined text-[16px]">stacked_line_chart</span>
-                <span>Explore Optimisation</span>
-              </Link>
+          {/* The first screen, already open */}
+          <div data-ui className="rs-frag-light w-full max-w-[440px] p-6 shadow-xl justify-self-end">
+            <div className="font-display text-[22px] leading-none text-[#1f2b4d] mb-5">
+              Plan your first block
             </div>
+
+            <label className="block text-[13px] text-[#6a7186] mb-1.5" htmlFor="cta-corridor">
+              Corridor
+            </label>
+            <input
+              id="cta-corridor"
+              type="text"
+              value={corridor}
+              onChange={(e) => setCorridor(e.target.value)}
+              className="w-full border border-[#e8e8e6] bg-white px-3 py-3 text-[15px] text-[#1f2b4d] outline-none focus-visible:outline-2 focus-visible:outline-[#1f2b4d] mb-4"
+            />
+
+            <div className="grid grid-cols-2 gap-2 mb-5" role="group" aria-label="Planning week">
+              {['This week', 'Next week'].map((w) => (
+                <button
+                  key={w}
+                  type="button"
+                  aria-pressed={week === w}
+                  onClick={() => setWeek(w)}
+                  className={`py-2.5 text-[15px] font-semibold border cursor-pointer transition-colors ${
+                    week === w
+                      ? 'bg-[#1f2b4d] text-white border-[#1f2b4d]'
+                      : 'bg-white text-[#1f2b4d] border-[#e8e8e6] hover:border-[#6a7186]'
+                  }`}
+                >
+                  {w}
+                </button>
+              ))}
+            </div>
+
+            <Link to={loginTo} className="rs-btn w-full !py-4">
+              Launch dashboard
+            </Link>
           </div>
         </div>
       </div>

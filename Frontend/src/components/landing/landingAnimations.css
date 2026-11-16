@@ -1,245 +1,390 @@
-/* ==========================================================================
-   RailSync Landing Page — Premium Animation & Design System
-   Dark Navy Railway Operations Aesthetic
-   Dashboard-matched color language: #080f1d / #0c172b / #16253d
-   ========================================================================== */
+/* RailSync landing — v7: Adomate structure, RailSync brand.
+   Light grey ground, tangerine accent (RailSync's, in place of Adomate's
+   lime), League Spartan display, Figtree text. Hey Comic kept only for the
+   RAILSYNC wordmark. Adomate's patterns, not its copy: announcement bar,
+   pill CTAs, small-caps eyebrows with a dot, full-bleed accent sections,
+   white step cards, dark product fragments on the light page, concentric
+   arc rings, a big white final card, a dark footer.
+   Sections kept from v6: Problem, Pipeline (5 fields), Capabilities,
+   Digital Twin, Optimiser, What-If, CTA, Footer. Testimonials skipped —
+   RailSync has none, and none are invented.
+   House rules kept: one button shape (now a pill), tokens only, no
+   decorative gradients (the sphere glow is a blurred solid; the arcs are
+   bordered rings), no glass, no shadows on resting surfaces. */
+
+@font-face {
+  font-family: 'League Spartan';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/league-spartan-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/figtree-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/figtree-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Hey Comic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/hey-comic.ttf') format('truetype');
+}
 
 :root {
-  --rs-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
-  --rs-ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --rs-dur-fast: 220ms;
-  --rs-dur-medium: 400ms;
-  --rs-dur-reveal: 650ms;
-  --rs-dur-slow: 900ms;
+  --bg: #ececee;
+  --surface: #ffffff;
+  --raised: #f5f5f3;
+  --ink: #111110;
+  --muted: #5c5c58;
+  --accent: #f7941d;
+  --accent-hover: #e07f0e;
+  --accent-ink: #1f2b4d;
+  --edge: #d8d8d4;
+  --ui: #0f1729;
+  --ui-edge: #22304d;
+  --dark: #070b14;
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+  --step-hero: clamp(52px, 5.2vw, 80px);
 }
 
-/* ── Scan line (hero track motif) ────────────────────────────────────────── */
-@keyframes scanLine {
-  from { left: -10%; }
-  to   { left: 110%; }
+html,
+body {
+  overflow-x: clip;
 }
 
-/* ── Page Load ───────────────────────────────────────────────────────────── */
-@keyframes pageReveal {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.rs-page-enter {
-  animation: pageReveal 500ms var(--rs-ease-out) forwards;
+.rs-page {
+  font-family: 'Figtree', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
 }
 
-/* ── RAILSYNC Hero Wordmark Entrance ─────────────────────────────────────── */
-@keyframes wordmarkReveal {
-  from {
-    opacity: 0;
-    transform: translateY(22px) scale(0.96);
+.rs-page ::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.font-display {
+  font-family: 'League Spartan', 'Figtree', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.font-wordmark {
+  font-family: 'Hey Comic', 'League Spartan', system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Display sizes come from the tokens (Tailwind reads text-[var()] as a
+   colour, so font-size tokens get plain classes, not utilities). */
+.rs-hero-h1 {
+  font-size: var(--step-hero);
+}
+.rs-head {
+  font-size: var(--step-head);
+}
+
+.rs-wrap {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 40px;
+}
+
+@media (max-width: 640px) {
+  .rs-wrap {
+    padding-inline: 20px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-.rs-wordmark-enter {
-  animation: wordmarkReveal 900ms var(--rs-ease-standard) 100ms both;
 }
 
-/* ── Staggered Hero Content Entrance ─────────────────────────────────────── */
-@keyframes contentReveal {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.rs-content-1 { animation: contentReveal 700ms var(--rs-ease-standard) 0ms   both; }
-.rs-content-2 { animation: contentReveal 700ms var(--rs-ease-standard) 200ms both; }
-.rs-content-3 { animation: contentReveal 700ms var(--rs-ease-standard) 380ms both; }
-.rs-content-4 { animation: contentReveal 700ms var(--rs-ease-standard) 540ms both; }
-.rs-content-5 { animation: contentReveal 700ms var(--rs-ease-standard) 700ms both; }
-.rs-content-6 { animation: contentReveal 700ms var(--rs-ease-standard) 860ms both; }
-
-/* ── Scroll Reveal System ─────────────────────────────────────────────────── */
-.rs-reveal {
-  opacity: 0;
-  transform: translateY(20px);
-  transition:
-    opacity var(--rs-dur-reveal) var(--rs-ease-standard),
-    transform var(--rs-dur-reveal) var(--rs-ease-standard);
-  will-change: opacity, transform;
-}
-.rs-reveal.rs-revealed {
-  opacity: 1;
-  transform: translateY(0);
-}
-.rs-stagger-1 { transition-delay: 60ms; }
-.rs-stagger-2 { transition-delay: 130ms; }
-.rs-stagger-3 { transition-delay: 200ms; }
-.rs-stagger-4 { transition-delay: 270ms; }
-.rs-stagger-5 { transition-delay: 340ms; }
-.rs-stagger-6 { transition-delay: 410ms; }
-
-/* ── Floating Operational Cards (hero depth) ──────────────────────────────── */
-@keyframes floatUp {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-7px); }
-}
-@keyframes floatDown {
-  0%, 100% { transform: translateY(-4px); }
-  50%       { transform: translateY(4px); }
-}
-.rs-float-1 { animation: floatUp   5.5s ease-in-out infinite; }
-.rs-float-2 { animation: floatDown 6.5s ease-in-out infinite; animation-delay: 1.2s; }
-.rs-float-3 { animation: floatUp   7.0s ease-in-out infinite; animation-delay: 2.5s; }
-
-/* ── Status Live Dot ─────────────────────────────────────────────────────── */
-@keyframes statusPulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.38; transform: scale(0.85); }
-}
-.rs-status-live    { animation: statusPulse 2.4s ease-in-out infinite; }
-.rs-status-warning { animation: statusPulse 1.7s ease-in-out infinite; }
-
-/* ── Navbar Entrance ─────────────────────────────────────────────────────── */
-@keyframes navbarDrop {
-  from { opacity: 0; transform: translateY(-10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.rs-navbar-enter {
-  animation: navbarDrop 500ms var(--rs-ease-standard) forwards;
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.rs-nav-link {
-  position: relative;
-  transition: color var(--rs-dur-fast) ease;
+/* ── Scoped tokens: a dark fragment, an accent field and the dark footer
+   re-resolve --ink/--muted for everything inside them, so the same
+   Tailwind text-[var(--ink)] classes read correctly on any ground. ─────── */
+.rs-frag {
+  --ink: #e8ecf5;
+  --muted: #93a0b8;
 }
-.rs-nav-link::after {
+.rs-accent {
+  --ink: var(--accent-ink);
+  --muted: rgba(31, 43, 77, 0.72);
+}
+.rs-dark {
+  --ink: #e8ecf5;
+  --muted: #93a0b8;
+}
+
+/* ── Eyebrow: small caps with a tangerine dot (Adomate's eyebrow) ───────── */
+.rs-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rs-eyebrow::before {
   content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+/* On a tangerine field the dot would vanish — use the dark navy instead. */
+.rs-accent .rs-eyebrow::before {
+  background: var(--accent-ink);
+}
+
+/* ── Buttons: one shape, a pill ─────────────────────────────────────────── */
+.rs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1;
+  padding: 15px 24px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 200ms ease, border-color 200ms ease;
+}
+.rs-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.rs-btn-dark {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: #ffffff;
+}
+.rs-btn-dark:hover {
+  background: #000000;
+  border-color: #000000;
+}
+.rs-btn-ghost {
+  background: transparent;
+  border-color: var(--edge);
+  color: var(--ink);
+}
+.rs-btn-ghost:hover {
+  border-color: var(--muted);
+  background: transparent;
+}
+
+/* ── Fragments: the product's own interface (data-ui) ─────────────────────
+   Dark sheet: ui bg, 1px ui-edge, 16px corners, no shadow. Inside a
+   fragment the product's conventions apply. */
+.rs-frag {
+  background: var(--ui);
+  border: 1px solid var(--ui-edge);
+  border-radius: 16px;
+}
+.rs-frag-light {
+  background: #ffffff;
+  border: 1px solid #e8e8e6;
+  border-radius: 16px;
+  color: #1f2b4d;
+}
+.rs-frag-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.rs-frag-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.rs-frag-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Risk marks: never colour alone — always a word with the dot. */
+.rs-risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* ── Icon chips: one tangerine square, icon inside, next to a label ─────── */
+.rs-icon-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  flex-shrink: 0;
+}
+.rs-icon-chip svg {
+  width: 20px;
+  height: 20px;
+}
+.rs-icon-chip-dark {
+  background: var(--raised);
+  color: var(--ink);
+}
+
+/* ── Arcs: concentric bordered rings (Adomate's arc motif, no gradient) ─── */
+.rs-arcs {
   position: absolute;
-  bottom: -2px;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.rs-arcs i {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid;
+}
+
+/* ── Hero sphere: blurred-solid glow behind the ball (not a gradient) ───── */
+.rs-sphere-glow {
+  position: absolute;
+  width: 560px;
+  height: 560px;
   left: 50%;
-  width: 0;
-  height: 1px;
-  background: rgba(184, 199, 230, 0.55);
-  transition:
-    width 220ms var(--rs-ease-standard),
-    left  220ms var(--rs-ease-standard);
-}
-.rs-nav-link:hover::after { width: 70%; left: 15%; }
-
-/* ── Primary Button ──────────────────────────────────────────────────────── */
-.rs-btn-primary {
-  background: #16253d;
-  color: #ffffff;
-  border: 1px solid #394761;
-  transition:
-    transform     280ms var(--rs-ease-standard),
-    background    250ms ease,
-    border-color  250ms ease,
-    box-shadow    250ms ease;
-}
-.rs-btn-primary:hover {
-  background: #1e3255;
-  border-color: #b8c7e6;
-  transform: translateY(-2px);
-  box-shadow: 0 0 22px rgba(184, 199, 230, 0.14), 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-.rs-btn-primary:active {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
-/* ── Secondary Button ────────────────────────────────────────────────────── */
-.rs-btn-secondary {
-  background: rgba(22, 37, 61, 0.5);
-  color: #b8c7e6;
-  border: 1px solid #394761;
-  transition:
-    transform     280ms var(--rs-ease-standard),
-    background    250ms ease,
-    border-color  250ms ease,
-    box-shadow    250ms ease,
-    color         250ms ease;
-}
-.rs-btn-secondary:hover {
-  background: rgba(30, 50, 85, 0.8);
-  border-color: #b8c7e6;
-  color: #ffffff;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-.rs-btn-secondary:active { transform: translateY(0); }
-
-/* ── Arrow Micro-Interaction ─────────────────────────────────────────────── */
-.rs-arrow-icon {
-  display: inline-block;
-  transition: transform var(--rs-dur-fast) var(--rs-ease-standard);
-}
-.group:hover .rs-arrow-icon { transform: translateX(5px); }
-
-/* ── Card Hover (dark theme) ─────────────────────────────────────────────── */
-.rs-card {
-  transition:
-    transform    220ms var(--rs-ease-standard),
-    box-shadow   220ms var(--rs-ease-standard),
-    border-color 220ms ease;
-  will-change: transform;
-}
-.rs-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-  border-color: #394761 !important;
-}
-
-/* ── Background Glow Orb ─────────────────────────────────────────────────── */
-@keyframes glowBreath {
-  0%, 100% { opacity: 0.07; transform: scale(1); }
-  50%       { opacity: 0.14; transform: scale(1.06); }
-}
-.rs-glow-orb { animation: glowBreath 9s ease-in-out infinite; }
-
-/* ── Pipeline Connector Dot ──────────────────────────────────────────────── */
-@keyframes pipeFlow {
-  0%   { left: -8px;              opacity: 0; }
-  8%   {                          opacity: 1; }
-  92%  {                          opacity: 1; }
-  100% { left: calc(100% + 8px); opacity: 0; }
-}
-.rs-pipe-dot {
-  position: absolute;
   top: 50%;
-  transform: translateY(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  animation: pipeFlow 2.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  transform: translate(-50%, -50%);
+  background: var(--accent);
+  opacity: 0.16;
+  filter: blur(120px);
+  border-radius: 999px;
+  pointer-events: none;
 }
 
-/* ── SVG Track Elements ──────────────────────────────────────────────────── */
-@keyframes trackBreath {
-  0%, 100% { opacity: 0.18; }
-  50%       { opacity: 0.32; }
+/* ── Sphere mode toggle: segmented pills ────────────────────────────────── */
+.rs-mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  overflow: hidden;
 }
-.rs-track-breath { animation: trackBreath 7s ease-in-out infinite; }
+.rs-mode-toggle button {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+}
+.rs-mode-toggle button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
 
-/* ── Reduced Motion ──────────────────────────────────────────────────────── */
+/* ── Marquee: one row of cards, cut at the edges, swipeable on touch ────── */
+.rs-marquee {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.rs-marquee::-webkit-scrollbar {
+  display: none;
+}
+.rs-marquee-card {
+  flex-shrink: 0;
+  width: 260px;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  padding: 18px;
+  text-align: left;
+}
+
+/* ── Step cards: white, rounded, number + title + visual ────────────────── */
+.rs-step-card {
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: left;
+}
+
+/* ── Reveal: content is visible by default; only hidden once JS runs ───── */
+.rs-js .rs-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms ease, transform 600ms ease;
+}
+.rs-js .rs-reveal.rs-revealed {
+  opacity: 1;
+  transform: none;
+}
+.rs-js .rs-stagger-1 { transition-delay: 70ms; }
+.rs-js .rs-stagger-2 { transition-delay: 140ms; }
+.rs-js .rs-stagger-3 { transition-delay: 210ms; }
+.rs-js .rs-stagger-4 { transition-delay: 280ms; }
+
+/* ── Shutter: the hero stage opens once from its left edge ─────────────── */
+@keyframes rs-shutter {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+.rs-shutter {
+  animation: rs-shutter 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Command list key caps ─────────────────────────────────────────────── */
+.rs-keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1em;
+  height: 1em;
+  min-width: 28px;
+  min-height: 28px;
+  background: var(--raised);
+  color: var(--ink);
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 0;
+}
+
+/* ── Reduced motion: content stays, travel goes ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .rs-wordmark-enter,
-  .rs-content-1, .rs-content-2, .rs-content-3,
-  .rs-content-4, .rs-content-5, .rs-content-6,
-  .rs-navbar-enter,
-  .rs-float-1, .rs-float-2, .rs-float-3,
-  .rs-status-live, .rs-status-warning,
-  .rs-pipe-dot, .rs-glow-orb, .rs-track-breath {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
+  .rs-js .rs-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
-  .rs-reveal {
-    opacity: 1 !important;
-    transform: none !important;
-    transition: none !important;
+  .rs-shutter {
+    animation: none;
   }
-  .rs-card,
-  .rs-btn-primary,
-  .rs-btn-secondary,
-  .rs-nav-link::after {
-    transition: none !important;
+  .rs-btn {
+    transition: none;
   }
 }

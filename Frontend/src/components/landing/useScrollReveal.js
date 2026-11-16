@@ -7,6 +7,10 @@ export function useScrollReveal() {
     const el = ref.current;
     if (!el) return;
 
+    // Mark that JS is running: only then does the CSS hide pre-reveal content,
+    // so the page stays readable with scripting off.
+    document.documentElement.classList.add('rs-js');
+
     // If reduced motion is preferred, reveal immediately
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       el.classList.add('rs-revealed');

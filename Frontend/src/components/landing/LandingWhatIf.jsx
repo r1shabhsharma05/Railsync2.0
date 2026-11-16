@@ -1,124 +1,120 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useScrollReveal } from './useScrollReveal';
 
-const STEPS = [
+const STAGES = [
   {
-    tag: 'BASELINE',
-    label: 'Baseline Plan',
-    icon: 'check_circle',
-    title: 'Active Conflict-Free Schedule',
-    desc: 'All maintenance tasks have been assigned to available block windows. No train-path conflicts are present in the current schedule.',
-    activeStyle: 'border-[#394761] bg-[#0c172b] text-white',
-    iconColor: 'text-[#3c9e57]',
-    detailStyle: 'bg-[#0c172b] border-[#394761] text-white',
+    runIn: 'To begin,',
+    text: 'the plan is conflict-free — every task has a block window and no train path is crossed.',
+    evidence: (
+      <div data-ui className="rs-frag p-4">
+        <div className="flex justify-between text-[13px] leading-[1.5] py-1">
+          <span className="font-semibold text-[var(--ink)]">Track tamping — Seg B</span>
+          <span className="text-[var(--muted)]">Block B-12 · 02:00</span>
+        </div>
+        <div className="flex justify-between text-[13px] leading-[1.5] py-2">
+          <span className="font-semibold text-[var(--ink)]">OHE inspection — Seg C</span>
+          <span className="text-[var(--muted)]">Night window</span>
+        </div>
+        <div className="flex justify-between text-[13px] leading-[1.5] py-2">
+          <span className="font-semibold text-[var(--ink)]">Signal cable renewal</span>
+          <span className="text-[var(--muted)]">No conflict</span>
+        </div>
+      </div>
+    ),
   },
   {
-    tag: 'DISRUPTION',
-    label: 'Disruption Injected',
-    icon: 'crisis_alert',
-    title: 'Emergency Defect / Changed Constraint',
-    desc: 'A new defect report or unexpected constraint is injected into the scenario — for example, an urgent repair request that conflicts with a currently planned block.',
-    activeStyle: 'border-error-container bg-error-container/20 text-error',
-    iconColor: 'text-error',
-    detailStyle: 'bg-error-container/10 border-error-container/40',
+    runIn: 'Then a disruption lands:',
+    text: 'an emergency defect, or a constraint that changes, conflicts with a planned block.',
+    evidence: (
+      <div data-ui className="rs-frag p-4">
+        <div className="bg-[var(--accent)] text-[var(--accent-ink)] px-3 py-2 text-[15px] font-semibold">
+          Emergency defect — Segment B
+        </div>
+        <p className="mt-3 text-[13px] leading-[1.5] text-[var(--muted)]">
+          Urgent repair request conflicts with Block B-12, 02:00–04:30.
+        </p>
+      </div>
+    ),
   },
   {
-    tag: 'UPDATE',
-    label: 'Constraints Updated',
-    icon: 'lock_reset',
-    title: 'Constraint Model Refreshed',
-    desc: 'The solver\'s constraint model is updated to reflect the new situation: affected time windows, resource locks, and changed priorities are incorporated.',
-    activeStyle: 'border-[#fdd663] bg-[#fef7e0]/10 text-[#b06000]',
-    iconColor: 'text-[#b06000]',
-    detailStyle: 'bg-[#fef7e0]/5 border-[#fdd663]/30',
+    runIn: 'After that,',
+    text: 'the constraint model is refreshed — affected windows, resource locks and new priorities go in.',
+    evidence: (
+      <div data-ui className="rs-frag p-4">
+        <div className="flex justify-between text-[13px] leading-[1.5] py-1">
+          <span className="font-semibold text-[var(--ink)]">Window 02:00–04:30</span>
+          <span className="text-[var(--muted)]">Locked</span>
+        </div>
+        <div className="flex justify-between text-[13px] leading-[1.5] py-2">
+          <span className="font-semibold text-[var(--ink)]">Priority: tamping</span>
+          <span className="text-[var(--muted)]">Raised</span>
+        </div>
+      </div>
+    ),
   },
   {
-    tag: 'RE-SOLVE',
-    label: 'CP-SAT Re-optimises',
-    icon: 'autorenew',
-    title: 'Solver Runs on Updated Constraints',
-    desc: 'Google OR-Tools CP-SAT re-optimises the schedule with the updated constraints, finding a new feasible assignment for affected tasks.',
-    activeStyle: 'border-[#394761] bg-[#16253d] text-white',
-    iconColor: 'text-[#b8c7e6]',
-    detailStyle: 'bg-[#16253d] border-[#394761]',
+    runIn: 'From then on,',
+    text: 'CP-SAT re-optimises only what changed, finding a new feasible assignment for the affected tasks.',
+    evidence: (
+      <div data-ui className="rs-frag p-4">
+        <div className="flex justify-between text-[13px] leading-[1.5] py-1">
+          <span className="font-semibold text-[var(--ink)]">CP-SAT re-run</span>
+          <span className="text-[var(--muted)]">3 tasks moved</span>
+        </div>
+        <div className="flex justify-between text-[13px] leading-[1.5] py-2">
+          <span className="font-semibold text-[var(--ink)]">Result</span>
+          <span className="text-[var(--muted)]">Feasible</span>
+        </div>
+      </div>
+    ),
   },
   {
-    tag: 'UPDATED',
-    label: 'Updated Schedule',
-    icon: 'verified_user',
-    title: 'Re-optimised Plan Ready',
-    desc: 'The updated, conflict-free schedule is available for review. Planners can compare it against the baseline before deciding whether to adopt the new plan.',
-    activeStyle: 'border-[#3c9e57]/40 bg-[#002c0f]/20 text-[#3c9e57]',
-    iconColor: 'text-[#3c9e57]',
-    detailStyle: 'bg-[#002c0f]/10 border-[#3c9e57]/30',
+    runIn: 'In the end,',
+    text: 'the updated plan waits for review — compare it with the baseline before adopting it.',
+    evidence: (
+      <div data-ui className="rs-frag p-4">
+        <div className="flex justify-between text-[13px] leading-[1.5] py-1">
+          <span className="text-[var(--muted)]">Baseline</span>
+          <span className="font-semibold text-[var(--ink)]">Block B-12 · 02:00</span>
+        </div>
+        <div className="flex justify-between text-[13px] leading-[1.5] py-2">
+          <span className="text-[var(--muted)]">Updated</span>
+          <span className="font-semibold text-[var(--ink)]">Block B-12 · 03:30</span>
+        </div>
+      </div>
+    ),
   },
 ];
 
-const INACTIVE = 'border-surface-container-high bg-surface-container-lowest text-secondary hover:border-surface-container';
-
+/**
+ * What-if — Run-in column (product-performs blueprint).
+ * One reading column: five paragraphs, each opening with a bold run-in
+ * phrase, each followed by one small piece of evidence exactly as wide
+ * as the column. The scenario is a demonstration, as the copy says.
+ */
 export default function LandingWhatIf() {
-  const [active, setActive] = useState(0);
   const sectionRef = useScrollReveal();
-  const cur = STEPS[active];
 
   return (
-    <section id="what-if" className="py-20 bg-surface border-b border-surface-container-high">
-      <div ref={sectionRef} className="rs-reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-surface-container border border-surface-container-high text-primary font-label-caps text-[10px] font-bold uppercase mb-4">
-            <span className="material-symbols-outlined text-[14px]">tune</span>
-            <span>What-If &amp; Replanning</span>
-          </div>
-          <h2 className="font-headline-xl text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight mb-3">
-            What Happens When the Plan Changes?
+    <section id="what-if" className="bg-[var(--bg)]">
+      <div ref={sectionRef} className="rs-reveal rs-wrap py-24 md:py-32">
+        <div className="md:ml-[30%] max-w-[600px]">
+          <h2 className="font-display text-[28px] md:text-[32px] leading-[1.1] text-[var(--ink)] mb-12">
+            What happens when the plan changes?
           </h2>
-          <p className="font-body-lg text-secondary text-sm sm:text-base leading-relaxed">
-            RailSync re-optimises the maintenance plan when conditions change. Select a stage to explore the scenario.
-          </p>
-        </div>
 
-        {/* 5-step selector */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-6">
-          {STEPS.map((step, idx) => (
-            <button
-              key={step.tag}
-              onClick={() => setActive(idx)}
-              className={`rounded border p-3.5 text-left transition-all duration-300 cursor-pointer ${
-                active === idx ? step.activeStyle : INACTIVE
-              }`}
-            >
-              <div className={`flex items-center gap-2 mb-1.5 ${active === idx ? step.iconColor : 'text-secondary'}`}>
-                <span className="material-symbols-outlined text-lg">{step.icon}</span>
-                <span className="font-label-caps text-[9px] font-bold">{idx + 1}</span>
+          <div className="space-y-[56px] md:space-y-[72px]">
+            {STAGES.map((s) => (
+              <div key={s.runIn}>
+                <p className="text-[17px] md:text-[18px] leading-[1.6] text-[var(--muted)]">
+                  <strong className="font-semibold text-[var(--ink)]">{s.runIn} </strong>
+                  {s.text}
+                </p>
+                <div className="mt-5">{s.evidence}</div>
               </div>
-              <div className="font-label-caps text-[9px] font-bold uppercase tracking-wider text-on-surface mb-0.5">
-                {step.label}
-              </div>
-              <div className="font-label-caps text-[8px] text-secondary uppercase tracking-wider">
-                {step.tag}
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Active detail */}
-        <div className={`rounded border p-6 transition-all duration-350 ${cur.detailStyle}`}>
-          <div className="flex items-center gap-3 mb-2">
-            <span className={`material-symbols-outlined text-2xl ${cur.iconColor}`}>{cur.icon}</span>
-            <div>
-              <div className="font-label-caps text-[10px] font-bold uppercase tracking-wider text-secondary mb-0.5">
-                Stage {active + 1} of 5 · {cur.tag}
-              </div>
-              <h3 className="font-headline-sm text-sm font-bold text-on-surface">{cur.title}</h3>
-            </div>
+            ))}
           </div>
-          <p className="font-body-lg text-sm text-secondary leading-relaxed">
-            {cur.desc}
-          </p>
         </div>
-
       </div>
     </section>
   );

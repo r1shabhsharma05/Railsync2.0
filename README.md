@@ -6,6 +6,11 @@ RailSync 2.0 is a **Smart India Hackathon prototype** that uses **Artificial Int
 
 The system combines **failure-risk forecasting, evidence-based department negotiation, CP-SAT optimization, disruption re-planning, and execution feedback** to maximize asset availability while minimizing disruption to train operations.
 
+## 🔗 Live demo
+
+- **App:** https://railsync2-frontend.pages.dev/
+- **API:** https://railsync-api-4jv5.onrender.com
+
 ---
 
 ## 🎯 Problem

@@ -1,71 +1,71 @@
 import React from 'react';
 import { useScrollReveal } from './useScrollReveal';
+import { LigIcon } from './icons.jsx';
 
 const PROBLEMS = [
   {
     icon: 'folder_off',
-    title: 'Fragmented Maintenance Requests',
+    title: 'Fragmented maintenance requests',
     detail:
       'Maintenance requests originate from multiple departments — Civil, Electrical/OHE, and S&T — and must be reconciled against one another and against active train operations without a unified planning view.',
-    stagger: 'rs-stagger-1',
   },
   {
     icon: 'sync_problem',
-    title: 'Train Movement Conflicts',
+    title: 'Train movement conflicts',
     detail:
       'Maintenance blocks must be planned around passenger and freight train schedules while respecting safe headway clearances and traction power isolation requirements.',
-    stagger: 'rs-stagger-2',
   },
   {
     icon: 'groups_3',
-    title: 'Multi-Department Coordination',
+    title: 'Multi-department coordination',
     detail:
       'Civil Engineering, Electrical/OHE, and S&T departments may compete for the same available block windows. Without a shared objective function, coordination is manual and conflict-prone.',
-    stagger: 'rs-stagger-3',
   },
 ];
 
+/**
+ * Intro — Statement with inline thumbnails (product-performs blueprint).
+ * The dictated heading is the statement itself, with two real photographs
+ * of the railway world set inline between the words it names. The three
+ * problems follow as plain text columns — no cards, no icons, no boxes.
+ */
 export default function LandingProblem() {
   const sectionRef = useScrollReveal();
 
   return (
-    <section id="problem" className="py-20 bg-surface-container-lowest border-b border-surface-container-high">
-      <div ref={sectionRef} className="rs-reveal max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="problem" className="bg-[var(--bg)]">
+      <div ref={sectionRef} className="rs-reveal rs-wrap py-[96px] md:py-[22vh]">
+        <h2 className="font-display text-left md:text-center text-[8vw] md:text-[clamp(32px,4.2vw,62px)] leading-[1.12] md:leading-[1.12] text-[var(--ink)] max-w-full md:max-w-[66%] mx-auto">
+          Railway{' '}
+          <img
+            src="/images/close-up-of-railway-track.jpg"
+            alt="Railway track"
+            className="inline-block h-[0.85em] w-[1.3em] object-cover align-[-0.1em] rounded-[0.14em] mx-[0.12em]"
+          />
+          maintenance is a scheduling{' '}
+          <img
+            src="/images/wadi-rum-railway-track-hejaz-railway-jordan.jpg"
+            alt="Railway corridor"
+            className="inline-block h-[0.85em] w-[1.3em] object-cover align-[-0.1em] rounded-[0.14em] mx-[0.12em]"
+          />
+          problem.
+        </h2>
 
-        {/* Header */}
-        <div className="max-w-2xl mb-12">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-[#fef7e0] border border-[#fdd663] text-[#b06000] font-label-caps text-[10px] font-bold uppercase mb-4">
-            <span className="material-symbols-outlined text-[14px]">warning</span>
-            <span>The Problem</span>
-          </div>
-          <h2 className="font-headline-xl text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight leading-tight mb-3">
-            Railway Maintenance Is a Scheduling Problem
-          </h2>
-          <p className="font-body-lg text-secondary text-sm sm:text-base leading-relaxed">
-            Coordinating maintenance work across multiple departments, train schedules, and safety constraints is inherently complex — and difficult to solve manually at scale.
-          </p>
-        </div>
-
-        {/* 3 problem cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 mt-20 md:mt-28">
           {PROBLEMS.map((p) => (
-            <div
-              key={p.title}
-              className={`rs-card ${p.stagger} rounded bg-surface-container-lowest border border-surface-container-high p-6 shadow-sm`}
-            >
-              <div className="w-9 h-9 rounded flex items-center justify-center bg-[#fef7e0] border border-[#fdd663] text-[#b06000] mb-4">
-                <span className="material-symbols-outlined text-xl">{p.icon}</span>
-              </div>
-              <h3 className="font-headline-sm font-bold text-on-surface text-sm mb-2 leading-snug">
+            <div key={p.title}>
+              <span className="rs-icon-chip mb-4">
+                <LigIcon name={p.icon} />
+              </span>
+              <h3 className="font-display text-[20px] leading-[1.1] text-[var(--ink)] mb-3">
                 {p.title}
               </h3>
-              <p className="font-body-sm text-secondary text-xs leading-relaxed">
+              <p className="text-[16px] leading-[1.6] text-[var(--ink)]">
                 {p.detail}
               </p>
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

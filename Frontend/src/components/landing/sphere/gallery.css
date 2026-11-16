@@ -1,0 +1,123 @@
+/* Orbit sphere — CSS 3D billboard cards (website-to-code episode 002).
+   v7: light cards on the light page (Adomate's white-card look) — white
+   sheet, dark text, tangerine icon chip, soft shadow. The stage stays a
+   flat rendering context; perspective lives on the items' direct parent,
+   and the draw loop sorts by z into zIndex. Individual transform
+   properties are used so the per-frame `transform` the loop writes
+   composes with the card's own translate and hover scale instead of
+   fighting them. */
+
+.ig-surface {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.ig-surface:focus-visible {
+  outline: 2px solid var(--accent, #f7941d);
+  outline-offset: 4px;
+}
+
+.ig-surface.is-dragging {
+  cursor: grabbing;
+}
+
+.ig-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-style: flat;
+}
+
+.ig-item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  /* Placed by its own centre, so the layout maths deals in centres.
+     `translate` is a separate property, so it composes with the `transform`
+     the animation loop writes every frame instead of fighting it. */
+  translate: -50% -50%;
+  /* Identity base: the hover scale below must not create a new stacking
+     context only on hover. */
+  rotate: 0deg;
+  scale: 1;
+  transition: scale 0.25s ease;
+}
+
+.ig-item:hover {
+  scale: 1.06;
+}
+
+.ig-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e3e3e0;
+  box-shadow: 0 12px 30px rgba(17, 17, 16, 0.14);
+  color: #111110;
+  text-align: left;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ig-card-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f7941d;
+  color: #1f2b4d;
+}
+
+.ig-card-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ig-card-title {
+  font-family: "Figtree", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.ig-card-line {
+  font-family: "Figtree", sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #5c5c58;
+}
+
+.ig-card-photo {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: -12px -12px 6px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px 8px 0 0;
+}
+
+.ig-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
