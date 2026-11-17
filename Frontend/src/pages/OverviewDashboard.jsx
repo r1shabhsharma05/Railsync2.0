@@ -506,7 +506,7 @@ export default function OverviewDashboard() {
             {/* Dynamic Train Route Sections Breakdown */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-xs bg-surface-container-low p-space-sm rounded border border-surface-container-high">
               {currentIrCorridor.sections.map((sec, idx) => {
-                const isSecBlocked = idx === 0 ? delhiCritical.some(s => parseInt(s.segment_id?.replace('SEG-','')) <= 12)
+                const isSecHighRisk = idx === 0 ? delhiCritical.some(s => parseInt(s.segment_id?.replace('SEG-','')) <= 12)
                   : idx === 1 ? delhiCritical.some(s => parseInt(s.segment_id?.replace('SEG-','')) > 12)
                   : idx === 2 ? agraCritical.some(s => parseInt(s.segment_id?.replace('SEG-','')) <= 35)
                   : agraCritical.some(s => parseInt(s.segment_id?.replace('SEG-','')) > 35);
@@ -525,8 +525,8 @@ export default function OverviewDashboard() {
                     </div>
                     <div className="flex items-center justify-between text-[11px] font-code-sm mt-1">
                       <span className="text-on-surface-variant">{sec.tag}</span>
-                      <span className={isSecBlocked ? "text-error font-bold" : "text-emerald-600 font-semibold"}>
-                        {isSecBlocked ? "⛔ ACTIVE BLOCK" : "🟢 ALL CLEAR"}
+                      <span className={isSecHighRisk ? "text-error font-bold" : "text-emerald-600 font-semibold"}>
+                        {isSecHighRisk ? "⚠️ HIGH RISK" : "🟢 ALL CLEAR"}
                       </span>
                     </div>
                   </div>
