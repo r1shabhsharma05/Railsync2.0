@@ -59,3 +59,12 @@ class PredictRiskRequest(BaseModel):
     length_km: Optional[float] = 12.5
     monsoon_exposure: Optional[str] = "medium"
     freight_density_class: Optional[str] = "high"
+    curve_gradient_class: Optional[str] = None
+    # Layer 1 model features (optional; when supplied the XGBoost heads run
+    # on them instead of the cold-start priors).
+    grade3_defects_previous_90d: Optional[float] = None
+    defect_count_month: Optional[float] = None
+    defect_count_prev_month: Optional[float] = None
+    overdue_tasks_active: Optional[float] = None
+    overdue_days_max: Optional[float] = None
+    monsoon_month: Optional[float] = None

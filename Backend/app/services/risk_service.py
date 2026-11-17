@@ -153,6 +153,7 @@ def predict_and_store_segment_risk(db: Session, request_data: dict) -> RiskPredi
         "length_km": float(request_data.get("length_km", 10.0)),
         "age_years": float(request_data.get("age_years", 20.0)),
         "installation_year": request_data.get("installation_year"),
+        "curve_gradient_class": request_data.get("curve_gradient_class", "flat"),
         "monsoon_exposure": request_data.get("monsoon_exposure", "low"),
         "freight_density_class": request_data.get("freight_density_class", "medium"),
     }
@@ -195,8 +196,11 @@ def predict_and_store_segment_risk(db: Session, request_data: dict) -> RiskPredi
 def _segment_to_dict(seg) -> dict:
     return {
         "segment_id": seg.segment_id,
+        "division": seg.division,
+        "asset_type": seg.asset_type,
         "age_years": seg.age_years,
         "length_km": seg.length_km,
+        "installation_year": seg.installation_year,
         "curve_gradient_class": seg.curve_gradient_class,
         "monsoon_exposure": seg.monsoon_exposure,
         "freight_density_class": seg.freight_density_class,

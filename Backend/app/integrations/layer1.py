@@ -1,8 +1,8 @@
 """RailSync 2.0 — Layer 1 Integration Adapter: Trained Risk Prediction.
 ====================================================================
-Connects FastAPI Backend directly to the trained Layer 1 ML system (source of truth:
-Railsync_Layer1_Complete/). Loads verified model forecasts, discrete-time survival curves,
-and feature importances directly from trained ML artifacts.
+Runs the trained Layer 1 ML models (XGBoost failure/duration/overrun) at
+request time. Falls back to the pre-computed trained forecasts CSV, then to
+the Weibull cold-start priors, only when the model files are unavailable.
 """
 
 from __future__ import annotations
@@ -145,6 +145,178 @@ def _ensure_trained_data() -> None:
         _LOADED = True
 
 
+# ── Trained models (run at request time; the .joblib files are read-only) ──
+_MODELS_DIR: Optional[Path] = None
+for _cand in [
+    Path(__file__).resolve().parent.parent.parent.parent / "Railsync_Layer1_Complete" / "models",
+    Path("Railsync_Layer1_Complete") / "models",
+]:
+    if (_cand / "failure_xgb.joblib").exists():
+        _MODELS_DIR = _cand.resolve()
+        break
+
+_MODELS: Dict[str, Any] = {}
+_MODELS_LOADED = False
+_SNAPSHOT: Dict[str, Dict[str, Any]] = {}
+_SNAPSHOT_LOADED = False
+
+# Raw feature fields the failure model needs (one-hot encoded at predict time).
+_NUMERIC_FEATURES = [
+    "grade3_defects_previous_90d", "defect_count_month", "monsoon_month",
+    "defect_count_prev_month", "overdue_tasks_active", "overdue_days_max",
+    "length_km", "age_years", "installation_year",
+]
+_CATEGORICAL_FEATURES = [
+    "monsoon_exposure", "freight_density_class",
+    "curve_gradient_class", "asset_type", "division",
+]
+# A segment counts as "has feature data" when any of these were supplied.
+_FEATURE_DATA_KEYS = [
+    "defect_count_month", "defect_count_prev_month",
+    "grade3_defects_previous_90d", "overdue_tasks_active", "overdue_days_max",
+]
+
+
+def _ensure_models() -> None:
+    """Load the trained .joblib models once. Missing files => model path off."""
+    global _MODELS_LOADED
+    if _MODELS_LOADED:
+        return
+    _MODELS_LOADED = True
+    if _MODELS_DIR is None:
+        log.warning("Trained model files not found. Layer 1 running on CSV fallback.")
+        return
+    try:
+        import joblib
+        import numpy as np  # noqa: F401  (needed by the sklearn wrappers at predict time)
+    except ImportError as exc:
+        log.warning("joblib/numpy unavailable (%s). Layer 1 running on CSV fallback.", exc)
+        return
+    try:
+        # Only the failure head runs live: the duration/overrun heads take
+        # just age+length and predict near-constant values (0.2-0.7h,
+        # 0.40-0.57), so they would put noise into the plan. Their fields
+        # keep the same risk-derived formulas the CSV path already used.
+        _MODELS["failure_xgb"] = joblib.load(_MODELS_DIR / "failure_xgb.joblib")
+        log.info("Loaded trained Layer 1 failure model from %s", _MODELS_DIR)
+    except Exception as exc:
+        log.error("Failed to load trained Layer 1 models: %s", exc, exc_info=True)
+        _MODELS.clear()
+
+
+def _ensure_snapshot() -> None:
+    """Load the per-segment feature snapshot (Layer 0 final-month rows)."""
+    global _SNAPSHOT_LOADED
+    if _SNAPSHOT_LOADED:
+        return
+    _SNAPSHOT_LOADED = True
+    snap_file = Path(__file__).resolve().parent / "segment_features.json"
+    if not snap_file.exists():
+        return
+    try:
+        import json
+        with open(snap_file, "r", encoding="utf-8") as f:
+            _SNAPSHOT.update(json.load(f).get("segments", {}))
+        log.info("Loaded %d segment feature rows from %s", len(_SNAPSHOT), snap_file.name)
+    except Exception as exc:
+        log.error("Failed to load segment feature snapshot: %s", exc, exc_info=True)
+
+
+def _title_case(value: Any) -> str:
+    """'high' -> 'High': the model was trained on title-case categories."""
+    s = str(value or "").strip()
+    return s[:1].upper() + s[1:].lower() if s else s
+
+
+def _feature_row(segment: dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Build the raw feature row for a segment, or None when it has no feature data.
+
+    Snapshot rows (the 46 trained segments) win. Otherwise the row is built
+    from the segment dict; it only counts when the caller supplied defect /
+    overdue data — a bare segment keeps the cold-start priors path.
+    """
+    _ensure_snapshot()
+    sid = str(segment.get("segment_id") or segment.get("id") or "").strip()
+    if sid in _SNAPSHOT:
+        return dict(_SNAPSHOT[sid])
+    if not any(segment.get(k) is not None for k in _FEATURE_DATA_KEYS):
+        return None
+    import datetime
+    month = datetime.datetime.now(datetime.timezone.utc).month
+    return {
+        "age_years": float(segment.get("age_years") or 25.0),
+        "length_km": float(segment.get("length_km") or 12.0),
+        "installation_year": int(segment.get("installation_year") or 2001),
+        "grade3_defects_previous_90d": float(segment.get("grade3_defects_previous_90d") or 0.0),
+        "defect_count_month": float(segment.get("defect_count_month") or 0.0),
+        "defect_count_prev_month": float(segment.get("defect_count_prev_month") or 0.0),
+        "overdue_tasks_active": float(segment.get("overdue_tasks_active") or 0.0),
+        "overdue_days_max": float(segment.get("overdue_days_max") or 0.0),
+        "monsoon_month": float(segment.get("monsoon_month") if segment.get("monsoon_month") is not None else (1.0 if month in (6, 7, 8, 9) else 0.0)),
+        "monsoon_exposure": _title_case(segment.get("monsoon_exposure", "Medium")),
+        "freight_density_class": _title_case(segment.get("freight_density_class", "Medium")),
+        "curve_gradient_class": str(segment.get("curve_gradient_class", "Low-Flat")),
+        "asset_type": str(segment.get("asset_type", "Track")),
+        "division": str(segment.get("division", "Delhi")),
+    }
+
+
+def _encode_failure_row(row: Dict[str, Any], columns: list[str]):
+    """One-hot encode a raw feature row into the failure model's column order."""
+    import numpy as np
+    vec = {c: 0.0 for c in columns}
+    for k in _NUMERIC_FEATURES:
+        if k in vec:
+            vec[k] = float(row.get(k, 0.0))
+    for k in _CATEGORICAL_FEATURES:
+        key = f"{k}_{row.get(k, '')}"
+        if key in vec:
+            vec[key] = 1.0
+    return np.array([[vec[c] for c in columns]], dtype=float)
+
+
+def _model_predict(segment: dict[str, Any], row: Dict[str, Any]) -> Dict[str, Any]:
+    """Run the trained failure head and return the Layer 1 contract."""
+    _ensure_trained_data()  # feature importances for the response
+    failure = _MODELS["failure_xgb"]
+    columns = list(failure.get_booster().feature_names)
+    x = _encode_failure_row(row, columns)
+    hazard = float(failure.predict_proba(x)[0, 1])
+    hazard = min(max(hazard, 1e-8), 1 - 1e-8)
+    risk_val = round(1 - (1 - hazard) ** 30, 6)
+    age = float(row.get("age_years", 25.0))
+    prev_dur = round(float(2.0 + risk_val * 2.5), 2)
+    overrun_p = round(float(min(0.95, max(0.05, 0.1 + risk_val * 0.35))), 4)
+    exp_down = round(float(risk_val * 4.5), 3)
+    conf = "high" if risk_val >= 0.7 or age >= 35 else ("medium" if risk_val >= 0.001 else "low")
+    curve = [
+        {
+            "day": d,
+            "daily_hazard": round(hazard, 6),
+            "survival_probability": round(max(0.0, (1.0 - hazard) ** d), 6),
+            "cumulative_failure_probability": round(1.0 - (1.0 - hazard) ** d, 6),
+        }
+        for d in range(1, 31)
+    ]
+    return {
+        "segment_id": str(segment.get("segment_id") or segment.get("id") or "").strip(),
+        "division": str(segment.get("division", row.get("division", "Delhi"))),
+        "asset_type": str(segment.get("asset_type", row.get("asset_type", "Track"))),
+        "risk_30d": risk_val,
+        "expected_downtime_days": exp_down,
+        "preventive_block_duration_hrs": prev_dur,
+        "confidence": conf,
+        "cold_start_fallback": False,
+        "overrun_probability": overrun_p,
+        "forecast_as_of": "2025-12-01",
+        "hazard": round(hazard, 6),
+        "risk_score": round(risk_val * 100.0, 4),
+        "survival_curve": curve,
+        "feature_contributions": _FEATURE_CONTRIBUTIONS,
+        "model_version": "failure-xgb-v1.0",
+    }
+
+
 def _calculate_cold_start_risk(segment: dict[str, Any]) -> float:
     """Calculates cold-start 30-day failure risk based on trained Layer 1 Weibull asset-type priors."""
     asset = str(segment.get("asset_type", "Track")).strip()
@@ -180,15 +352,29 @@ def _calculate_cold_start_risk(segment: dict[str, Any]) -> float:
 
 
 def predict_risk(segment: dict[str, Any]) -> dict[str, Any]:
-    """Predict 30-day failure risk for a segment using actual trained Layer 1 model outputs.
+    """Predict 30-day failure risk for a segment using the trained Layer 1 models.
 
-    Returns the normalized 10-field Layer 1 contract.
+    Runs the XGBoost failure/duration/overrun heads at request time. Falls back
+    to the pre-computed trained forecasts CSV, then to the Weibull cold-start
+    priors, only when the model files are unavailable or the segment has no
+    feature data. Returns the normalized 10-field Layer 1 contract.
     """
-    _ensure_trained_data()
+    _ensure_models()
 
     sid = str(segment.get("segment_id") or segment.get("id") or "").strip()
 
-    # 1. Exact lookup from trained ML forecasts
+    # 1. Real inference when the models are loaded and the segment has features.
+    if _MODELS:
+        row = _feature_row(segment)
+        if row is not None:
+            try:
+                return _model_predict(segment, row)
+            except Exception as exc:
+                log.error("Model inference failed for %s, using CSV fallback: %s", sid, exc)
+
+    _ensure_trained_data()
+
+    # 2. Exact lookup from trained ML forecasts (CSV fallback).
     if sid in _TRAINED_FORECASTS:
         item = dict(_TRAINED_FORECASTS[sid])
         item["survival_curve"] = _TRAINED_SURVIVAL_CURVES.get(sid, [])
@@ -196,7 +382,7 @@ def predict_risk(segment: dict[str, Any]) -> dict[str, Any]:
         item["model_version"] = "trained-layer1-v1.0"
         return item
 
-    # 2. Cold-start fallback for new/unseen corridor segments using trained asset-type priors
+    # 3. Cold-start fallback for new/unseen corridor segments using trained asset-type priors
     risk_val = _calculate_cold_start_risk(segment)
     exp_down = round(max(0.01, risk_val * 4.5), 3)
 
@@ -250,6 +436,9 @@ def predict_risk_batch(segments: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def is_available() -> bool:
-    """Returns True if Layer 1 trained artifacts or data directory are operational."""
+    """Returns True if the trained Layer 1 models, or the forecast data, are operational."""
+    _ensure_models()
+    if _MODELS:
+        return True
     _ensure_trained_data()
     return len(_TRAINED_FORECASTS) > 0 or _LAYER1_DIR is not None
