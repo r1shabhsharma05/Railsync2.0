@@ -21,7 +21,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import feedback, health, negotiation, optimization, plans, risk, tasks, timetable
+from app.api.routes import admin, feedback, health, negotiation, optimization, plans, risk, tasks, timetable
 from app.core.config import settings
 from app.core.logging import get_logger, setup_logging
 
@@ -70,6 +70,7 @@ app.add_middleware(
 )
 
 # Register routes
+app.include_router(admin.router)
 app.include_router(health.router)
 app.include_router(tasks.router)
 app.include_router(risk.router)
