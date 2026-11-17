@@ -659,7 +659,7 @@ export default function PredictAndOptimize() {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-slate-400">Passenger Train Conflicts:</span>
-                        <span className="font-bold text-emerald-400">Protected (0 Conflict with 12952 Rajdhani)</span>
+                        <span className="font-bold text-emerald-400">Protected (0 Conflict)</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-slate-400">Recommended Freight Window:</span>

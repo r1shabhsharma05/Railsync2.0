@@ -66,7 +66,7 @@ def run_optimization(
             "negotiation_run_id": neg_result["negotiation_run_id"],
         })
 
-    # 4. Real published timetable fixture (Delhi–Mumbai Rajdhani / Express corridor)
+    # 4. Real published timetable fixture (NDLS–DDU corridor)
     timetable = generate_timetable(seed=42, use_real_fixture=True)
 
     # 5 & 6. Run optimizer for requested horizons
@@ -205,7 +205,7 @@ def run_weekly_planning(db: Session, policy: str = "balanced") -> dict[str, Any]
     if not tasks:
         raise ValueError("No pending tasks to optimize.")
     risk_data = risk_service.get_risk_data_map(db)
-    # Real published timetable fixture (Delhi–Mumbai Rajdhani / Express corridor)
+    # Real published timetable fixture (NDLS–DDU corridor)
     timetable = generate_timetable(seed=42, use_real_fixture=True)
     result = layer3.run_weekly_plan(tasks=tasks, risk_data=risk_data, timetable=timetable, policy=policy)
     return result.to_dict()
@@ -217,7 +217,7 @@ def run_monthly_planning(db: Session, policy: str = "balanced") -> dict[str, Any
     if not tasks:
         raise ValueError("No pending tasks to optimize.")
     risk_data = risk_service.get_risk_data_map(db)
-    # Real published timetable fixture (Delhi–Mumbai Rajdhani / Express corridor)
+    # Real published timetable fixture (NDLS–DDU corridor)
     timetable = generate_timetable(seed=42, use_real_fixture=True)
     result = layer3.run_monthly_plan(tasks=tasks, risk_data=risk_data, timetable=timetable, policy=policy)
     return result.to_dict()
@@ -258,7 +258,7 @@ def run_pareto(db: Session) -> dict[str, Any]:
         raise ValueError("No tasks available for Pareto frontier analysis.")
     risk_data = risk_service.get_risk_data_map(db)
 
-    # Real published timetable fixture (Delhi–Mumbai Rajdhani / Express corridor)
+    # Real published timetable fixture (NDLS–DDU corridor)
     timetable = generate_timetable(seed=42, use_real_fixture=True)
     result = layer3.run_pareto_frontier(tasks=tasks, risk_data=risk_data, timetable=timetable)
     result_dict = result.to_dict()
@@ -278,7 +278,7 @@ def run_robustness(db: Session, num_scenarios: int = 50) -> dict[str, Any]:
     if not tasks:
         raise ValueError("No tasks available for robustness evaluation.")
     risk_data = risk_service.get_risk_data_map(db)
-    # Real published timetable fixture (Delhi–Mumbai Rajdhani / Express corridor)
+    # Real published timetable fixture (NDLS–DDU corridor)
     timetable = generate_timetable(seed=42, use_real_fixture=True)
     result = layer3.run_scenario_robustness(
         tasks=tasks, risk_data=risk_data, timetable=timetable, num_scenarios=num_scenarios
@@ -297,7 +297,7 @@ def run_plan_b(db: Session) -> dict[str, Any]:
     if not tasks:
         raise ValueError("No tasks available for Plan B generation.")
     risk_data = risk_service.get_risk_data_map(db)
-    # Real published timetable fixture (Delhi–Mumbai Rajdhani / Express corridor)
+    # Real published timetable fixture (NDLS–DDU corridor)
     timetable = generate_timetable(seed=42, use_real_fixture=True)
     result = layer3.run_plan_b_contingencies(tasks=tasks, risk_data=risk_data, timetable=timetable)
     return result.to_dict()

@@ -37,35 +37,26 @@ API_ENDPOINTS = [
     "https://api.railwayapi.com/v2/route/train/{train_no}/date/{date}/apikey/{key}",
 ]
 
-# Delhi–Mumbai corridor train numbers to fetch
+# NDLS–DDU corridor train numbers to fetch
 CORRIDOR_TRAINS = [
-    "12952",  # New Delhi – Mumbai Central Tejas Rajdhani Express
-    "12951",  # Mumbai Central – New Delhi Tejas Rajdhani Express
-    "12954",  # Hazrat Nizamuddin – Mumbai Central August Kranti Rajdhani
-    "12009",  # Mumbai Central – Ahmedabad Shatabdi Express
-    "20901",  # Mumbai Central – Gandhinagar Vande Bharat Express
-    "12926",  # Paschim Express (New Delhi – Mumbai Central)
-    "12908",  # Maharashtra Sampark Kranti Express
-    "12962",  # Avantika Express (Indore – Mumbai Central)
-    "12922",  # Flying Ranee Express (Surat – Mumbai Central)
-    "12138",  # Mumbai CST – Punjab Mail
-    "12496",  # Bikaner Superfast Express
-    "19019",  # Dehradun Express
+    "12302",  # New Delhi – Howrah Rajdhani Express
+    "12314",  # New Delhi – Sealdah Rajdhani Express
+    "12424",  # New Delhi – Dibrugarh Rajdhani Express
+    "22436",  # New Delhi – Varanasi Vande Bharat Express
+    "12398",  # Mahabodhi Express (New Delhi – Gaya)
+    "12301",  # Howrah – New Delhi Rajdhani Express
+    "12313",  # Sealdah – New Delhi Rajdhani Express
+    "12311",  # Netaji Express (Howrah – Kalka)
+    "12391",  # Shramjeevi Express (Rajgir – New Delhi)
 ]
 
 # ── Indian Railways Station → Segment Mapping ────────────────────────────
 # Maps station codes to corridor segments for block-conflict modeling
 STATION_SEGMENT_MAP = {
     "NDLS": "SEG-001", "NZM": "SEG-001", "DEE": "SEG-001", "GZB": "SEG-001",
-    "MTJ": "SEG-002", "AGC": "SEG-002", "BTE": "SEG-002", "IDH": "SEG-002",
-    "SWM": "SEG-003", "HNQ": "SEG-003", "DHO": "SEG-003", "MLP": "SEG-003",
-    "KOTA": "SEG-004", "SKS": "SEG-004", "COR": "SEG-004", "GGC": "SEG-004",
-    "NAD": "SEG-005", "CTO": "SEG-005", "MDS": "SEG-005", "NGB": "SEG-005",
-    "RTM": "SEG-006", "UJN": "SEG-006", "INDB": "SEG-006", "MGN": "SEG-006",
-    "GDA": "SEG-007", "DHD": "SEG-007", "PLN": "SEG-007", "ADI": "SEG-007",
-    "BRC": "SEG-008", "MSH": "SEG-008", "KYN": "SEG-008", "GNC": "SEG-008",
-    "ST": "SEG-009", "NVS": "SEG-009", "BL": "SEG-009", "VAPI": "SEG-009",
-    "BVI": "SEG-010", "MMCT": "SEG-010", "BCT": "SEG-010", "BDTS": "SEG-010",
+    "ALJN": "SEG-002", "TDL": "SEG-003", "ETW": "SEG-004", "PHU": "SEG-005",
+    "CNB": "SEG-006", "GOV": "SEG-006", "FTP": "SEG-007", "BWR": "SEG-008",
+    "PRYJ": "SEG-009", "MZP": "SEG-009", "VDL": "SEG-010", "DDU": "SEG-010",
 }
 
 # Priority classification by train type keywords
@@ -201,10 +192,10 @@ def _adapt_api_response_to_fixture(api_data: dict, train_no: str) -> dict | None
             seg = _station_to_segment(code)
             # Rough division from segment
             seg_div_map = {
-                "SEG-001": "Delhi", "SEG-002": "Delhi", "SEG-003": "Kota",
-                "SEG-004": "Kota", "SEG-005": "Ratlam", "SEG-006": "Ratlam",
-                "SEG-007": "Vadodara", "SEG-008": "Vadodara",
-                "SEG-009": "Vadodara", "SEG-010": "Mumbai",
+                "SEG-001": "Delhi", "SEG-002": "Delhi", "SEG-003": "Prayagraj",
+                "SEG-004": "Prayagraj", "SEG-005": "Prayagraj", "SEG-006": "Prayagraj",
+                "SEG-007": "Prayagraj", "SEG-008": "Prayagraj",
+                "SEG-009": "Prayagraj", "SEG-010": "Pt. Deen Dayal Upadhyaya",
             }
             division = seg_div_map.get(seg, "Delhi")
 
@@ -264,13 +255,13 @@ def _adapt_api_response_to_fixture(api_data: dict, train_no: str) -> dict | None
         arr_time_str = f"{arr_h:02d}:{arr_m:02d}"
 
     origin = stops[0]["station"] if stops else "NDLS"
-    destination = stops[-1]["station"] if stops else "MMCT"
+    destination = stops[-1]["station"] if stops else "DDU"
 
     return {
         "train_number": train_no,
         "train_name": train_name,
         "priority": priority,
-        "corridor": "Delhi–Mumbai Rajdhani Corridor",
+        "corridor": "NDLS–DDU Corridor",
         "origin": origin,
         "destination": destination,
         "dep_time_str": dep_time_str,

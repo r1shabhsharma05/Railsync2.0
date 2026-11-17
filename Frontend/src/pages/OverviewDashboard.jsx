@@ -109,8 +109,22 @@ export default function OverviewDashboard() {
   }, [riskSegments]);
 
   const totalSegmentsCount = 50;
-  // Availability counts distinct segments with a scheduled block, not assignments.
-  const blockedSegmentCount = new Set(assignments.map((a) => a.segment_id)).size;
+  // Availability is a live reading: a segment counts as under a block only
+  // while a scheduled block window actually covers now. Counting any segment
+  // with a block anywhere in the plan read 0.0% available on a full weekly
+  // plan even though every section showed ALL CLEAR.
+  const nowMs = Date.now();
+  const blockedSegmentCount = new Set(
+    assignments
+      .filter(
+        (a) =>
+          a.block_start &&
+          a.block_end &&
+          new Date(a.block_start).getTime() <= nowMs &&
+          nowMs < new Date(a.block_end).getTime(),
+      )
+      .map((a) => a.segment_id),
+  ).size;
   const blockedAssetsCount = blockedSegmentCount;
   const availableAssetsCount = Math.max(0, totalSegmentsCount - blockedAssetsCount);
   const availabilityPercent = ((availableAssetsCount / totalSegmentsCount) * 100).toFixed(1);

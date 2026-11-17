@@ -23,6 +23,9 @@ import "./gallery.css";
  * needs ~1070px across but the column is ~690px at desktop, so the surface
  * clipped the outer cards. These values keep every card inside the column
  * at 1366px without shrinking the cards (their text is sized for 112px).
+ * Below that the column narrows but the spread did not, so cards clipped
+ * under ~1240px — the fit scale below shrinks the spread to whatever the
+ * measured surface actually fits, and never grows it past these values.
  */
 const FRAME = {
   sphere: {
@@ -84,6 +87,31 @@ export function ImageGallery({
 
   const radius = imageHeight * SPHERE.radiusPerImageHeight;
 
+  // Fit scale: how much of the tuned spread the measured surface fits.
+  // The sphere is the widest arrangement (spread 0.56 beats the spiral's
+  // 0.48/0.5, and the helix's half-height is under the sphere radius), so
+  // fitting against it covers both modes. Read by the draw loop every frame
+  // through a ref, so a resize never forces a re-render.
+  const fitRef = useRef(1);
+  useEffect(() => {
+    const el = surface.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      if (!w || !h) return;
+      const halfCardW = (imageHeight * ratio) / 2 + 8;
+      const halfCardH = imageHeight / 2 + 8;
+      const fitW = (w / 2 - halfCardW) / (radius * FRAME.sphere.vertical.spread);
+      const fitH = (h / 2 - halfCardH) / (radius * FRAME.sphere.vertical.spread);
+      fitRef.current = Math.max(0.2, Math.min(1, fitW, fitH));
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [surface, radius, imageHeight, ratio]);
+
   // The sphere is relaxed once and then never changes. Only the helix moves
   // under its own power, so only it is rebuilt per frame.
   const staticLayouts = useMemo(() => ({ sphere: sphereLayout(n) }), [n]);
@@ -129,7 +157,8 @@ export function ImageGallery({
       const t = s.morph >= 1 ? 1 : 1 - Math.pow(1 - s.morph, 3);
       const a = FRAME[s.from][axis];
       const b = FRAME[s.mode][axis];
-      const spread = a.spread + (b.spread - a.spread) * t;
+      const spread =
+        (a.spread + (b.spread - a.spread) * t) * fitRef.current;
       const cam = a.camera + (b.camera - a.camera) * t;
       if (stage.current) {
         stage.current.style.perspective = `${(radius * spread * cam).toFixed(0)}px`;
