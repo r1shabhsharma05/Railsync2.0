@@ -294,7 +294,7 @@ export default function TaskPool() {
             )}
           </div>
           <div className="text-right text-on-surface-variant font-code-sm text-code-sm">
-            Showing top {Math.min(30, filteredTasks.length)} of {loading ? '…' : filteredTasks.length} filtered tasks.
+            {loading ? 'Loading tasks…' : `Showing top ${Math.min(30, filteredTasks.length)} of ${filteredTasks.length} filtered tasks.`}
           </div>
         </div>
       </div>
