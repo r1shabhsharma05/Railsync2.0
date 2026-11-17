@@ -68,7 +68,7 @@ export default function DigitalTwin() {
                     NORTHERN &amp; NORTH CENTRAL CORRIDOR NETWORK
                   </span>
                   <span className="font-label-caps text-label-caps bg-secondary-container text-on-secondary-container px-1 py-0.5 rounded uppercase">
-                    50 ASSETS SYNCHRONIZED
+                    {loading ? 'SYNCING…' : `${segments.length} ASSETS SYNCHRONIZED`}
                   </span>
                 </div>
                 <span className="font-code-sm text-code-sm text-secondary">
@@ -99,7 +99,7 @@ export default function DigitalTwin() {
                 onClick={() => setTwinMode('planned')}
               >
                 <span className="material-symbols-outlined text-[14px]">event_repeat</span>
-                <span>CP-SAT PLANNED ({currentPlan?.assignments?.length || 413} BLOCKS)</span>
+                <span>CP-SAT PLANNED ({loading ? '…' : (currentPlan?.assignments?.length ?? '—')} BLOCKS)</span>
               </button>
             </div>
           </div>
@@ -132,7 +132,7 @@ export default function DigitalTwin() {
           <div className="lg:col-span-2 bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col gap-space-sm">
             <div className="flex items-center justify-between">
               <span className="font-headline-sm text-headline-sm text-on-surface">
-                Railway Physical Network Topology ({segments.length} Segments)
+                Railway Physical Network Topology ({loading ? '…' : segments.length} Segments)
               </span>
               <span className="font-code-sm text-code-sm text-on-surface-variant">
                 Click any segment to inspect
@@ -140,7 +140,16 @@ export default function DigitalTwin() {
             </div>
 
             <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2 max-h-[500px] overflow-y-auto p-1">
-              {segments.map((seg) => {
+              {loading ? (
+                <div className="col-span-full p-6 text-center font-code-sm text-code-sm text-on-surface-variant">
+                  Loading segments from the live API…
+                </div>
+              ) : segments.length === 0 ? (
+                <div className="col-span-full p-6 text-center font-code-sm text-code-sm text-on-surface-variant">
+                  No segments returned by the API.
+                </div>
+              ) : (
+                segments.map((seg) => {
                 const segCrit = seg.risk_30d >= 0.70;
                 const segMed = seg.risk_30d >= 0.30 && seg.risk_30d < 0.70;
                 const isSelected = selectedSegment?.segment_id === seg.segment_id;
@@ -168,7 +177,7 @@ export default function DigitalTwin() {
                       ></span>
                     </div>
                     <span className="text-[10px] font-label-caps text-on-surface-variant mt-1">
-                      {seg.division} • {seg.asset_type}
+                      {[seg.division, seg.asset_type].filter(Boolean).join(' • ') || '—'}
                     </span>
                     <span
                       className={`text-[11px] font-code-sm font-bold mt-1 ${
@@ -179,7 +188,8 @@ export default function DigitalTwin() {
                     </span>
                   </button>
                 );
-              })}
+              })
+              )}
             </div>
           </div>
 
@@ -206,28 +216,28 @@ export default function DigitalTwin() {
               <div className="p-space-sm bg-surface-container-low rounded-lg flex flex-col gap-2 font-code-sm text-code-sm mt-space-xs">
                 <div className="flex justify-between border-b border-surface-container-high pb-1">
                   <span className="text-on-surface-variant">Division:</span>
-                  <span className="text-on-surface font-bold">{selectedSegment?.division || 'Agra'}</span>
+                  <span className="text-on-surface font-bold">{selectedSegment?.division || '—'}</span>
                 </div>
                 <div className="flex justify-between border-b border-surface-container-high pb-1">
                   <span className="text-on-surface-variant">Asset Type:</span>
-                  <span className="text-on-surface font-bold">{selectedSegment?.asset_type || 'Track'}</span>
+                  <span className="text-on-surface font-bold">{selectedSegment?.asset_type || '—'}</span>
                 </div>
                 <div className="flex justify-between border-b border-surface-container-high pb-1">
                   <span className="text-on-surface-variant">30-Day Failure Risk:</span>
                   <span className={`font-bold ${isCrit ? 'text-error' : 'text-on-surface'}`}>
-                    {selectedSegment ? (selectedSegment.risk_30d * 100).toFixed(1) : 0}%
+                    {selectedSegment ? `${(selectedSegment.risk_30d * 100).toFixed(1)}%` : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-surface-container-high pb-1">
                   <span className="text-on-surface-variant">Recommended Block:</span>
                   <span className="text-on-surface font-bold">
-                    {selectedSegment?.preventive_block_duration_hrs ? `${selectedSegment.preventive_block_duration_hrs}h` : '4.5h'}
+                    {selectedSegment?.preventive_block_duration_hrs ? `${selectedSegment.preventive_block_duration_hrs}h` : '—'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-on-surface-variant">Expected Loss / Downtime:</span>
                   <span className="text-error font-bold">
-                    {selectedSegment?.expected_downtime_days ? `${selectedSegment.expected_downtime_days} Days` : '7.5 Days'}
+                    {selectedSegment?.expected_downtime_days ? `${selectedSegment.expected_downtime_days} Days` : '—'}
                   </span>
                 </div>
               </div>

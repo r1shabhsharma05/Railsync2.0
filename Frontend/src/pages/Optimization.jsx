@@ -25,27 +25,30 @@ export default function Optimization() {
   const [horizon, setHorizon] = useState('weekly');
   const [dispatching, setDispatching] = useState(false);
   const [optResult, setOptResult] = useState(null);
+  const [totalTasks, setTotalTasks] = useState(null);
   const [toastMsg, setToastMsg] = useState(null);
 
   // Load existing current plan on mount
   useEffect(() => {
     async function loadCurrent() {
       try {
-        const plan = await api.getCurrentPlan('weekly');
+        const [plan, tasks] = await Promise.all([
+          api.getCurrentPlan('weekly'),
+          api.getTasks(),
+        ]);
+        if (Array.isArray(tasks)) setTotalTasks(tasks.length);
         if (plan) {
           setOptResult({
             run_id: plan.optimization_run_id || 'OPT-BASELINE',
             policy: plan.policy || 'balanced',
-            status: 'optimal',
-            total_assignments: plan.assignments?.length || 413,
+            status: plan.status || 'optimal',
+            total_assignments: plan.assignments?.length ?? 0,
             assignments: plan.assignments || [],
-            objective_values: {
-              safety_score: 0.885,
-              throughput_score: 0.942,
-              solver_objective: 413.0,
-            },
-            robustness_score: 0.912,
-            execution_time_ms: 1632,
+            // No solver objective / robustness / runtime in the plan payload —
+            // shown as '—' until a real run returns them.
+            objective_values: null,
+            robustness_score: null,
+            execution_time_ms: null,
           });
         }
       } catch (err) {
@@ -184,7 +187,7 @@ export default function Optimization() {
               {dispatching ? (
                 <>
                   <span className="material-symbols-outlined text-[20px] animate-spin text-tertiary-fixed">autorenew</span>
-                  <span>EXECUTING CP-SAT SOLVER ON 602 REAL TASKS...</span>
+                  <span>EXECUTING CP-SAT SOLVER ON {totalTasks ?? '…'} REAL TASKS...</span>
                 </>
               ) : (
                 <>
@@ -201,15 +204,15 @@ export default function Optimization() {
           <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Scheduled Tasks</span>
             <span className="font-headline-lg text-headline-lg text-primary font-bold my-1">
-              {optResult?.total_assignments || 413}
+              {optResult?.total_assignments ?? '—'}
             </span>
-            <span className="font-code-sm text-code-sm text-on-tertiary-container">Out of 602 Tasks</span>
+            <span className="font-code-sm text-code-sm text-on-tertiary-container">Out of {totalTasks ?? '—'} Tasks</span>
           </div>
 
           <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Solver Runtime</span>
             <span className="font-headline-lg text-headline-lg text-on-surface font-bold my-1">
-              {optResult?.execution_time_ms ? `${optResult.execution_time_ms}ms` : '1.63s'}
+              {optResult?.execution_time_ms ? `${optResult.execution_time_ms}ms` : '—'}
             </span>
             <span className="font-code-sm text-code-sm text-on-tertiary-container">Sub-5s Realtime Guarantee</span>
           </div>
@@ -225,7 +228,7 @@ export default function Optimization() {
           <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Robustness Score</span>
             <span className="font-headline-lg text-headline-lg text-on-surface font-bold my-1">
-              {optResult?.robustness_score ? `${(optResult.robustness_score * 100).toFixed(1)}%` : '91.2%'}
+              {optResult?.robustness_score ? `${(optResult.robustness_score * 100).toFixed(1)}%` : '—'}
             </span>
             <span className="font-code-sm text-code-sm text-secondary">Monte Carlo Evaluated</span>
           </div>
@@ -235,7 +238,7 @@ export default function Optimization() {
         <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col gap-space-sm">
           <div className="flex items-center justify-between flex-wrap gap-space-xs">
             <span className="font-headline-sm text-headline-sm text-on-surface">
-              CP-SAT Scheduled Assignments ({optResult?.assignments?.length || 413} Total)
+              CP-SAT Scheduled Assignments ({optResult == null ? '—' : (optResult.assignments?.length ?? 0)} Total)
             </span>
             <Link to="/planner" className="font-code-sm text-code-sm text-primary hover:underline">
               Open Full Gantt Planner →
@@ -262,7 +265,7 @@ export default function Optimization() {
                     <td className="py-space-sm px-space-sm">{a.department}</td>
                     <td className="py-space-sm px-space-sm">{a.duration_hrs}h</td>
                     <td className="py-space-sm px-space-sm font-bold">{a.priority ? a.priority.toFixed(1) : '85.0'}</td>
-                    <td className="py-space-sm px-space-sm text-on-surface-variant truncate max-w-[280px]">
+                    <td className="py-space-sm px-space-sm text-on-surface-variant">
                       {a.reason || 'Assigned to optimal window avoiding passenger disruption'}
                     </td>
                   </tr>

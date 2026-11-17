@@ -103,3 +103,29 @@ def cleanup_test_data(request: CleanupRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return {"cleaned": True, "plans_removed": found_plan_ids, "deleted": counts}
+
+
+RESET_CONFIRM_VALUE = "reset-scheduled-to-pending"
+
+
+class ResetScheduledRequest(BaseModel):
+    confirm: str
+
+
+@router.post("/admin/reset-scheduled-tasks")
+def reset_scheduled_tasks(request: ResetScheduledRequest, db: Session = Depends(get_db)):
+    """Undo the old what-if bug: set every 'scheduled' task back to 'pending'.
+
+    Bounded by construction: the real pipeline never sets status='scheduled'
+    (tasks stay 'pending' through negotiate/optimize), so only rows the
+    buggy what-if run marked can ever match. Returns the count reset.
+    """
+    if request.confirm != RESET_CONFIRM_VALUE:
+        raise HTTPException(status_code=400, detail="confirm must be 'reset-scheduled-to-pending'")
+
+    updated = db.execute(
+        text("UPDATE maintenance_tasks SET status = 'pending' WHERE status = 'scheduled'")
+    ).rowcount
+    db.commit()
+
+    return {"reset": True, "updated": updated}

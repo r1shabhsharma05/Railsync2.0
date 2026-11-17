@@ -11,8 +11,8 @@ router = APIRouter(tags=["Plans"])
 
 
 @router.get("/plan/current", response_model=PlanResponse)
-def get_current_plan(db: Session = Depends(get_db)):
-    plan = plan_service.get_current_plan(db)
+def get_current_plan(plan_type: str | None = None, db: Session = Depends(get_db)):
+    plan = plan_service.get_current_plan(db, plan_type=plan_type)
     if plan is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

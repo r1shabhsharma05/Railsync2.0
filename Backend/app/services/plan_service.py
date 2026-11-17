@@ -12,9 +12,17 @@ from app.schemas.plans import PlanResponse
 log = get_logger("service.plan")
 
 
-def get_current_plan(db: Session) -> PlanResponse | None:
-    """Get the latest current plan with assignments and run metadata."""
-    plan = repo.get_current_plan(db)
+def get_current_plan(db: Session, plan_type: str | None = None) -> PlanResponse | None:
+    """Get the latest current plan with assignments and run metadata.
+
+    plan_type narrows to one type (weekly/monthly); without it, the
+    latest current plan of any type is returned.
+    """
+    plan = (
+        repo.get_current_plan_by_type(db, plan_type)
+        if plan_type
+        else repo.get_current_plan(db)
+    )
     if plan is None:
         return None
 

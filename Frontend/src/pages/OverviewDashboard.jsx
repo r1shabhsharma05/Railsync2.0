@@ -72,38 +72,34 @@ export default function OverviewDashboard() {
   };
 
   // Geographic Corridor 50-Segment Virtual Simulation (SEG-001 to SEG-050)
+  // Risk tiers match SegmentWhy / DigitalTwin: CRITICAL >= 70%, MODERATE >= 30%.
+  const isCriticalRisk = (s) => (s?.risk_30d || 0) >= 0.7;
+  const isModerateRisk = (s) => {
+    const r = s?.risk_30d || 0;
+    return r >= 0.3 && r < 0.7;
+  };
+
   const sortedCorridor = React.useMemo(() => {
     const mapBySeg = {};
     (riskSegments || []).forEach((s) => {
       if (s.segment_id) mapBySeg[s.segment_id] = s;
     });
 
-    const customDefects = (riskSegments || []).filter(
-      (s) => (s.risk_30d || 0) >= 0.003 || s.segment_id?.includes('NEW') || s.segment_id?.includes('TEST')
-    );
-
     const result = [];
     for (let i = 1; i <= 50; i++) {
       const segId = `SEG-${String(i).padStart(3, '0')}`;
       let segData = mapBySeg[segId];
 
-      if (!segData && customDefects.length > 0) {
-        if (i === 6 && customDefects[0]) segData = { ...customDefects[0] };
-        else if (i === 14 && customDefects[1]) segData = { ...customDefects[1] };
-        else if (i === 21 && customDefects[2]) segData = { ...customDefects[2] };
-        else if (i === 38 && customDefects[3]) segData = { ...customDefects[3] };
-      }
-
+      // No API row for this segment: keep the slot, but do NOT invent risk data.
       if (!segData) {
-        const isCaution = i === 12 || i === 34;
         segData = {
           segment_id: segId,
           division: i <= 25 ? 'Delhi' : 'Agra',
-          asset_type: i % 3 === 0 ? 'OHE' : i % 5 === 0 ? 'S&T' : 'Track',
-          risk_30d: isCaution ? 0.0025 : 0.0006,
-          expected_downtime_days: 0.01,
-          preventive_block_duration_hrs: 3.5,
-          confidence: '80% Confidence',
+          asset_type: null,
+          risk_30d: null,
+          expected_downtime_days: null,
+          preventive_block_duration_hrs: null,
+          confidence: null,
         };
       }
 
@@ -112,27 +108,21 @@ export default function OverviewDashboard() {
     return result;
   }, [riskSegments]);
 
-  const topRisks = [...riskSegments].sort((a, b) => (b.risk_30d || 0) - (a.risk_30d || 0)).slice(0, 3);
-  const highRiskSegments = sortedCorridor.filter((s) => (s.risk_30d || 0) >= 0.005 || s.segment_id?.includes('NEW') || s.segment_id?.includes('TEST'));
-
   const totalSegmentsCount = 50;
-  const scheduledBlocksCount = assignments.length > 0 ? assignments.length : 12;
-  const blockedAssetsCount = scheduledBlocksCount;
+  // Availability counts distinct segments with a scheduled block, not assignments.
+  const blockedSegmentCount = new Set(assignments.map((a) => a.segment_id)).size;
+  const blockedAssetsCount = blockedSegmentCount;
   const availableAssetsCount = Math.max(0, totalSegmentsCount - blockedAssetsCount);
   const availabilityPercent = ((availableAssetsCount / totalSegmentsCount) * 100).toFixed(1);
 
   const delhiSegments = sortedCorridor.filter((s) => s.division.toLowerCase() === 'delhi');
   const agraSegments = sortedCorridor.filter((s) => s.division.toLowerCase() === 'agra');
 
-  const delhiCritical = delhiSegments.filter((s) => (s.risk_30d || 0) >= 0.005 || s.segment_id?.includes('NEW') || s.segment_id?.includes('TEST'));
-  const delhiMedium = delhiSegments.filter((s) => (s.risk_30d || 0) >= 0.002 && !delhiCritical.includes(s));
-  const delhiLow = delhiSegments.filter((s) => !delhiCritical.includes(s) && !delhiMedium.includes(s));
+  const delhiCritical = delhiSegments.filter(isCriticalRisk);
 
-  const agraCritical = agraSegments.filter((s) => (s.risk_30d || 0) >= 0.005 || s.segment_id?.includes('NEW') || s.segment_id?.includes('TEST'));
-  const agraMedium = agraSegments.filter((s) => (s.risk_30d || 0) >= 0.002 && !agraCritical.includes(s));
-  const agraLow = agraSegments.filter((s) => !agraCritical.includes(s) && !agraMedium.includes(s));
+  const agraCritical = agraSegments.filter(isCriticalRisk);
 
-  const allCritical = sortedCorridor.filter((s) => (s.risk_30d || 0) >= 0.005 || s.segment_id?.includes('NEW') || s.segment_id?.includes('TEST'));
+  const allCritical = sortedCorridor.filter(isCriticalRisk);
 
   const [showConflictsModal, setShowConflictsModal] = useState(false);
   const [activeIrCorridor, setActiveIrCorridor] = useState('DELHI_KANPUR');
@@ -290,34 +280,15 @@ export default function OverviewDashboard() {
   // Department counts in current plan
   const engCount = assignments.filter((a) => a.department === 'Engineering' || a.department === 'TRACK').length;
   const oheCount = assignments.filter((a) => a.department === 'Electrical' || a.department === 'OHE').length;
-  const sntCount = assignments.filter((a) => a.department === 'S&T' || a.department === 'SIGNAL').length;
+  const sntCount = assignments.filter((a) => a.department === 'S&T' || a.department === 'SIG' || a.department === 'SIGNAL').length;
 
   const filteredAssignments = assignments;
 
-  // Active Schedule & Department Conflicts Engine
-  const activeConflictsList = React.useMemo(() => {
-    return sortedCorridor
-      .filter((s) => (s.risk_30d || 0) >= 0.005 || s.segment_id?.includes('NEW') || s.segment_id?.includes('TEST'))
-      .map((seg, idx) => {
-        const causeWord = getOneWordCause(seg);
-        const trains = idx % 2 === 0
-          ? ['#12952 Rajdhani Express', '#12004 Shatabdi Express']
-          : ['#22436 Vande Bharat Express', '#4092 Heavy Goods Freight'];
-        return {
-          id: `CONF-${seg.segment_id}`,
-          segment_id: seg.segment_id,
-          division: seg.division,
-          cause: causeWord,
-          risk_percent: ((seg.risk_30d || 0) * 100).toFixed(1),
-          conflicting_trains: trains,
-          conflict_type: idx % 2 === 0 ? 'Peak Daylight Train Overlap (14:30 IST)' : 'Multi-Department Track & OHE Block Clash',
-          cpsat_resolution: 'CP-SAT Zero-Conflict Off-Peak Window (01:00 - 04:30 IST)',
-          status: 'RESOLVED (0 PASSENGER OVERLAP)',
-        };
-      });
-  }, [sortedCorridor]);
-
-  const activeConflictsCount = activeConflictsList.length || 4;
+  // Conflicts come from the plan itself — the same source the header reads —
+  // so the two counts can never disagree. The plan carries no unresolved
+  // conflicts (CP-SAT hard constraint), so this is 0 unless the API says otherwise.
+  const planConflicts = currentPlan?.unresolved_conflicts || currentPlan?.conflicts || [];
+  const activeConflictsCount = planConflicts.length;
 
   return (
     <main className="flex flex-col relative w-full">
@@ -334,15 +305,15 @@ export default function OverviewDashboard() {
               </div>
               <div className="my-space-xs flex items-baseline gap-space-xs">
                 <span className="font-headline-lg text-headline-lg font-bold text-on-surface">
-                  {availabilityPercent}%
+                  {loading ? '—' : `${availabilityPercent}%`}
                 </span>
                 <span className="font-code-sm text-code-sm text-on-tertiary-container font-medium">
-                  {availableAssetsCount}/{totalSegmentsCount} Active
+                  {loading ? '—' : `${availableAssetsCount}/${totalSegmentsCount} Active`}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-code-sm text-code-sm text-on-surface-variant">
-                  {blockedAssetsCount} Under Maintenance Block
+                  {loading ? '—' : `${blockedAssetsCount} Under Maintenance Block`}
                 </span>
                 <span className="font-label-caps text-label-caps bg-tertiary-container text-on-tertiary-container px-1 py-0.5 rounded uppercase font-bold">
                   OPTIMAL
@@ -365,12 +336,12 @@ export default function OverviewDashboard() {
               </div>
               <div className="my-space-xs flex items-baseline gap-space-xs">
                 <span className="font-headline-lg text-headline-lg font-bold text-error">
-                  {allCritical.length}
+                  {loading ? '—' : allCritical.length}
                 </span>
                 <span className="font-code-sm text-code-sm text-error font-bold">Critical Segments</span>
               </div>
               <span className="font-code-sm text-code-sm text-error truncate font-semibold">
-                {allCritical.map((s) => s.segment_id).join(' / ') || 'None critical'}
+                {loading ? 'Loading…' : allCritical.map((s) => s.segment_id).join(' / ') || 'None critical'}
               </span>
             </div>
 
@@ -382,12 +353,12 @@ export default function OverviewDashboard() {
               </div>
               <div className="my-space-xs flex items-baseline gap-space-xs">
                 <span className="font-headline-lg text-headline-lg font-bold text-on-surface">
-                  {assignments.length || 413}
+                  {loading ? '—' : assignments.length}
                 </span>
                 <span className="font-code-sm text-code-sm text-on-tertiary-container font-semibold">APPROVED</span>
               </div>
               <div className="flex items-center gap-space-xs font-code-sm text-code-sm text-on-surface-variant">
-                <span>{engCount || 230} ENG</span>•<span>{oheCount || 105} ELEC</span>•<span>{sntCount || 78} S&amp;T</span>
+                <span>{loading ? '—' : engCount} ENG</span>•<span>{loading ? '—' : oheCount} ELEC</span>•<span>{loading ? '—' : sntCount} S&amp;T</span>
               </div>
             </div>
 
@@ -399,19 +370,19 @@ export default function OverviewDashboard() {
             >
               <div className="flex items-center justify-between text-secondary">
                 <span className="font-label-caps text-label-caps uppercase">Active Conflicts</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-error animate-ping"></span>
+                <span className={`w-2.5 h-2.5 rounded-full ${activeConflictsCount > 0 ? 'bg-error animate-ping' : 'bg-on-tertiary-container'}`}></span>
               </div>
               <div className="my-space-xs flex items-baseline gap-space-xs">
-                <span className="font-headline-lg text-headline-lg font-bold text-error">
-                  {activeConflictsCount}
+                <span className={`font-headline-lg text-headline-lg font-bold ${activeConflictsCount > 0 ? 'text-error' : 'text-on-surface'}`}>
+                  {loading ? '—' : activeConflictsCount}
                 </span>
-                <span className="font-code-sm text-code-sm font-bold text-error">
-                  ACTIVE CONFLICTS
+                <span className={`font-code-sm text-code-sm font-bold ${activeConflictsCount > 0 ? 'text-error' : 'text-on-surface-variant'}`}>
+                  {activeConflictsCount > 0 ? 'ACTIVE CONFLICTS' : 'NO ACTIVE CONFLICTS'}
                 </span>
               </div>
-              <span className="font-code-sm text-code-sm text-on-surface-variant truncate font-semibold flex items-center justify-between">
-                <span>100% Passenger Protected</span>
-                <span className="text-primary underline font-bold">Inspect →</span>
+              <span className="font-code-sm text-code-sm text-on-surface-variant font-semibold flex items-center justify-between gap-2">
+                <span className="min-w-0">100% Passenger Protected</span>
+                <span className="text-primary underline font-bold shrink-0">Inspect →</span>
               </span>
             </div>
 
@@ -423,12 +394,12 @@ export default function OverviewDashboard() {
               </div>
               <div className="my-space-xs flex items-baseline gap-space-xs">
                 <span className="font-headline-lg text-headline-lg font-bold text-on-surface">
-                  {currentPlan?.policy ? currentPlan.policy.toUpperCase() : 'BALANCED'}
+                  {loading ? '—' : currentPlan?.policy ? currentPlan.policy.toUpperCase() : '—'}
                 </span>
                 <span className="font-code-sm text-code-sm text-on-tertiary-container">OPTIMAL</span>
               </div>
               <span className="font-code-sm text-code-sm text-on-surface-variant truncate">
-                {currentPlan?.plan_id || 'Plan Active'}
+                {loading ? 'Loading plan…' : currentPlan?.plan_id || 'No active plan'}
               </span>
             </div>
           </div>
@@ -529,11 +500,11 @@ export default function OverviewDashboard() {
                 return (
                   <div key={sec.name} className="flex flex-col gap-1 p-2 rounded bg-surface-container-lowest border border-surface-container-high">
                     <div className="flex items-center justify-between">
-                      <span className={`font-code-sm text-code-sm font-bold ${sec.color} flex items-center gap-1`}>
+                      <span className={`font-code-sm text-code-sm font-bold ${sec.color} flex items-center gap-1 min-w-0`}>
                         <span className="material-symbols-outlined text-[14px]">train</span>
                         {sec.name}
                       </span>
-                      <span className="text-[10px] font-mono text-on-surface-variant font-semibold">{sec.dist}</span>
+                      <span className="text-[10px] font-mono text-on-surface-variant font-semibold shrink-0">{sec.dist}</span>
                     </div>
                     <div className="text-[11px] font-mono font-medium text-on-surface truncate">
                       {sec.route}
@@ -578,8 +549,8 @@ export default function OverviewDashboard() {
 
                   {/* 50 Track Block Segments */}
                   {sortedCorridor.map((seg, idx) => {
-                    const isDefect = (seg.risk_30d || 0) >= 0.005 || seg.segment_id?.includes('NEW') || seg.segment_id?.includes('TEST');
-                    const isCaution = (seg.risk_30d || 0) >= 0.002 && !isDefect;
+                    const isDefect = isCriticalRisk(seg);
+                    const isCaution = isModerateRisk(seg);
                     const isSelected = selectedNode === seg.segment_id;
                     const causeWord = getOneWordCause(seg);
 
@@ -651,8 +622,8 @@ export default function OverviewDashboard() {
                       return true;
                     });
                   })().map((seg) => {
-                    const isCrit = (seg.risk_30d || 0) >= 0.005 || seg.segment_id?.includes('NEW') || seg.segment_id?.includes('TEST');
-                    const isMed = (seg.risk_30d || 0) >= 0.002 && !isCrit;
+                    const isCrit = isCriticalRisk(seg);
+                    const isMed = isModerateRisk(seg);
                     const isSelected = selectedNode === seg.segment_id;
                     const causeWord = getOneWordCause(seg);
 
@@ -720,11 +691,9 @@ export default function OverviewDashboard() {
                           <span>•</span>
                           <span>Asset: {inspected.asset_type || cause}</span>
                           <span>•</span>
-                          <span>Failure Risk: <strong className={(inspected.risk_30d || 0) >= 0.005 ? 'text-error' : 'text-emerald-600'}>{((inspected.risk_30d || 0) * 100).toFixed(1)}%</strong></span>
+                          <span>Failure Risk: <strong className={isCriticalRisk(inspected) ? 'text-error' : 'text-emerald-600'}>{((inspected.risk_30d || 0) * 100).toFixed(1)}%</strong></span>
                           <span>•</span>
-                          <span>80% Model Accuracy Baseline</span>
-                          <span>•</span>
-                          <span>Block Duration: {inspected.preventive_block_duration_hrs || 3.5}h</span>
+                          <span>Block Duration: {inspected.preventive_block_duration_hrs ? `${inspected.preventive_block_duration_hrs}h` : '—'}</span>
                         </div>
                       );
                     })()}
@@ -791,8 +760,8 @@ export default function OverviewDashboard() {
                 ? agraSegments
                 : sortedCorridor.slice(0, 12)
               ).map((seg) => {
-                const isHigh = (seg.risk_30d || 0) >= 0.005 || seg.segment_id?.includes('NEW') || seg.segment_id?.includes('TEST');
-                const isMed = (seg.risk_30d || 0) >= 0.002 && !isHigh;
+                const isHigh = isCriticalRisk(seg);
+                const isMed = isModerateRisk(seg);
                 const isSelected = selectedNode === seg.segment_id;
                 const causeWord = getOneWordCause(seg);
 
@@ -880,7 +849,7 @@ export default function OverviewDashboard() {
                           Segment {seg.segment_id} ({seg.division} Division)
                         </span>
                         <span className="font-code-sm text-code-sm text-secondary font-medium">
-                          | 30d Risk: {((seg.risk_30d || 0) * 100).toFixed(1)}% | Cause: <strong className="text-on-surface">{causeWord}</strong> | Expected Downtime: {seg.expected_downtime_days || 0.025}d
+                          | 30d Risk: {((seg.risk_30d || 0) * 100).toFixed(1)}% | Cause: <strong className="text-on-surface">{causeWord}</strong> | Expected Downtime: {seg.expected_downtime_days ?? '—'}d
                         </span>
                       </div>
                     </div>
@@ -904,7 +873,7 @@ export default function OverviewDashboard() {
               <div className="flex items-center gap-space-xs">
                 <span className="material-symbols-outlined text-[16px] text-secondary">handyman</span>
                 <h2 className="font-headline-sm text-headline-sm text-on-surface">
-                  Optimized Maintenance Possessions ({assignments.length} Scheduled)
+                  Optimized Maintenance Possessions ({loading ? '—' : assignments.length} Scheduled)
                 </h2>
               </div>
               <div className="flex items-center gap-space-sm">
@@ -930,15 +899,11 @@ export default function OverviewDashboard() {
                 </thead>
                 <tbody className="divide-y divide-surface-container-high font-code-sm text-code-sm">
                   {filteredAssignments.slice(0, 15).map((a, index) => {
-                    const timeSlots = ['01:30 - 05:00', '06:15 - 08:45', '11:00 - 15:00', '13:30 - 15:00', '16:00 - 18:30', '22:30 - 02:00'];
-                    const durSlots = ['3.5 Hrs', '2.5 Hrs', '4.0 Hrs', '1.5 Hrs', '2.5 Hrs', '3.5 Hrs'];
-
                     const startStr = a.block_start ? new Date(a.block_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
                     const endStr = a.block_end ? new Date(a.block_end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
-                    const isDefaultSame = !startStr || (startStr === '01:00' && endStr === '05:00');
-                    const windowDisplay = isDefaultSame ? timeSlots[index % timeSlots.length] : `${startStr} - ${endStr}`;
-                    const durDisplay = a.duration_hrs && a.duration_hrs !== 3.5 ? `${a.duration_hrs} Hrs` : durSlots[index % durSlots.length];
+                    const windowDisplay = startStr && endStr ? `${startStr} - ${endStr}` : '—';
+                    const durDisplay = a.duration_hrs ? `${a.duration_hrs} Hrs` : '—';
 
                     return (
                       <tr key={a.id || a.task_id || index} className="hover:bg-surface-container-low transition-colors">
@@ -994,7 +959,7 @@ export default function OverviewDashboard() {
                 <span className="material-symbols-outlined text-error text-[24px]">warning</span>
                 <div>
                   <h3 className="font-headline-sm text-headline-sm text-on-surface">
-                    Active Corridor Schedule Conflicts ({activeConflictsList.length})
+                    Active Corridor Schedule Conflicts ({activeConflictsCount})
                   </h3>
                   <p className="font-code-sm text-code-sm text-on-surface-variant">
                     Operational clashes between high-priority defects, multi-department requests, & train timetables
@@ -1024,27 +989,25 @@ export default function OverviewDashboard() {
 
             {/* Conflicts Breakdown List */}
             <div className="flex flex-col gap-3">
-              {activeConflictsList.map((conf, i) => (
-                <div key={conf.id} className="bg-surface-container-low p-3 rounded-lg border border-surface-container-high flex flex-col gap-2">
-                  <div className="flex items-center justify-between flex-wrap gap-1">
-                    <span className="font-code-sm text-code-sm font-bold text-error flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-error animate-ping"></span>
-                      CONFLICT #{i+1}: {conf.segment_id} ({conf.division} Div)
-                    </span>
-                    <span className="font-label-caps text-label-caps bg-error-container/40 text-error px-2 py-0.5 rounded font-bold">
-                      {conf.cause} DEFECT ({conf.risk_percent}% RISK)
-                    </span>
-                  </div>
-                  <div className="text-body-sm font-code-sm text-on-surface flex flex-col gap-0.5">
-                    <div><strong>Clash Scenario:</strong> {conf.conflict_type}</div>
-                    <div><strong>Conflicting Trains:</strong> <span className="text-amber-500 font-mono font-semibold">{conf.conflicting_trains.join(', ')}</span></div>
-                    <div className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1 mt-1">
-                      <span className="material-symbols-outlined text-[14px]">check_circle</span>
-                      <strong>CP-SAT Resolution:</strong> {conf.cpsat_resolution}
+              {planConflicts.length === 0 ? (
+                <div className="p-space-md text-center text-on-surface-variant font-code-sm text-code-sm">
+                  No unresolved conflicts — the current plan places all {assignments.length} assignments with zero passenger-train overlap.
+                </div>
+              ) : (
+                planConflicts.map((conf, i) => (
+                  <div key={conf.id || conf.segment_id || i} className="bg-surface-container-low p-3 rounded-lg border border-surface-container-high flex flex-col gap-2">
+                    <div className="flex items-center justify-between flex-wrap gap-1">
+                      <span className="font-code-sm text-code-sm font-bold text-error flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-error animate-ping"></span>
+                        CONFLICT #{i + 1}: {conf.segment_id || conf.id || 'Unknown segment'}
+                      </span>
+                    </div>
+                    <div className="text-body-sm font-code-sm text-on-surface flex flex-col gap-0.5">
+                      <div>{conf.detail || conf.reason || conf.description || 'Unresolved scheduling conflict reported by the plan.'}</div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             {/* Modal Actions */}

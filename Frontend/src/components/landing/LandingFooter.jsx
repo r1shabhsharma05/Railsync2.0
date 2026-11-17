@@ -79,7 +79,8 @@ export default function LandingFooter() {
         </p>
 
         <div className="pt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[13px] text-[var(--muted)]">
-          <span>© {new Date().getFullYear()} RailSync. Prototype / research system — not a production deployment.</span>
+          {/* One string, so the spaces survive JSX whitespace handling. */}
+          <span>{`© ${new Date().getFullYear()} RailSync. Prototype / research system — not a production deployment.`}</span>
           <span className="font-semibold text-[var(--ink)]">
             Predict · Detect · Optimise · Explain · Replan
           </span>

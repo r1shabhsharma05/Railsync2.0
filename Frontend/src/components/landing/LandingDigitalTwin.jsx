@@ -111,7 +111,7 @@ export default function LandingDigitalTwin() {
           <div data-ui className="rs-frag w-full max-w-[520px] p-5">
             <div className="flex items-baseline justify-between gap-3 mb-4">
               <span className="font-display text-[20px] leading-none text-[var(--ink)]">
-                Delhi – Kanpur corridor
+                NDLS – DDU corridor
               </span>
               <span className="rs-frag-label shrink-0">Simulated data</span>
             </div>

@@ -10,7 +10,7 @@ const TILES = [
   },
   {
     icon: 'route',
-    name: '46 segments',
+    name: '50 segments',
     detail: 'Track segments in the trained model, each scored for failure risk.',
   },
   {

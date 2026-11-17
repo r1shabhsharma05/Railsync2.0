@@ -23,13 +23,19 @@ export default function PredictAndOptimize() {
   const [pipelineResults, setPipelineResults] = useState(null);
   const [error, setError] = useState(null);
   const [storedTasks, setStoredTasks] = useState([]);
+  const [storedLoading, setStoredLoading] = useState(true);
 
   const loadStoredTasks = async () => {
     try {
+      setStoredLoading(true);
       const tasks = await api.getTasks();
-      setStoredTasks(tasks || []);
+      // Only tasks reported through this form (TASK-NEW-*) — the full pool
+      // is the Layer-0 dataset, not user-reported defects.
+      setStoredTasks((tasks || []).filter((t) => t.task_id?.startsWith('TASK-NEW-')));
     } catch (err) {
       console.error('Failed to load stored tasks:', err);
+    } finally {
+      setStoredLoading(false);
     }
   };
 
@@ -217,7 +223,7 @@ export default function PredictAndOptimize() {
           </div>
           <h1 className="text-2xl font-bold font-headline tracking-tight">Predict &amp; Optimize Defect</h1>
           <p className="text-slate-400 text-sm mt-1 max-w-2xl">
-            Report new asset defects with physical attributes (<code className="text-amber-400 font-mono text-xs">age_years</code>, <code className="text-amber-400 font-mono text-xs">installation_year</code>, <code className="text-amber-400 font-mono text-xs">length_km</code>, <code className="text-amber-400 font-mono text-xs">monsoon_exposure</code>, <code className="text-amber-400 font-mono text-xs">asset_type</code>, <code className="text-amber-400 font-mono text-xs">division</code>). The system executes Layer 1 ML Risk Prediction $\rightarrow$ Layer 2 Negotiation $\rightarrow$ Layer 3 CP-SAT Timetable Possession Allocation and persists all data for audit.
+            Report new asset defects with physical attributes (<code className="text-amber-400 font-mono text-xs">age_years</code>, <code className="text-amber-400 font-mono text-xs">installation_year</code>, <code className="text-amber-400 font-mono text-xs">length_km</code>, <code className="text-amber-400 font-mono text-xs">monsoon_exposure</code>, <code className="text-amber-400 font-mono text-xs">asset_type</code>, <code className="text-amber-400 font-mono text-xs">division</code>). The system executes Layer 1 ML Risk Prediction → Layer 2 Negotiation → Layer 3 CP-SAT Timetable Possession Allocation and persists all data for audit.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -450,7 +456,7 @@ export default function PredictAndOptimize() {
         <div className="lg:col-span-7 space-y-4">
           {/* Stepper Status */}
           <div className="bg-[#0f172a] border border-[#1e293b] rounded-xl p-4 shadow-md text-white">
-            <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1">
+            <div className="flex items-center justify-between gap-2 flex-wrap pb-1">
               {[
                 { step: 1, label: 'Layer 0 Ingest' },
                 { step: 2, label: 'Layer 1 ML Risk' },
@@ -497,9 +503,9 @@ export default function PredictAndOptimize() {
           {/* Idle Placeholder */}
           {!pipelineResults && !loading && (
             <div className="bg-[#0f172a]/60 border border-[#1e293b] border-dashed rounded-xl p-12 text-center text-slate-400 space-y-3">
-              <span className="material-symbols-outlined text-4xl text-slate-600">psychology_alt</span>
+              <span className="material-symbols-outlined text-4xl text-slate-400">psychology_alt</span>
               <h3 className="text-base font-bold text-slate-300">Ready to Execute Pipeline</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
+              <p className="text-xs text-slate-300 max-w-md mx-auto">
                 Specify Task ID and defect attributes on the left and click "Predict Risk &amp; Run Multi-Layer Optimization" to evaluate failure probability, negotiation claims, and track possession slots.
               </p>
             </div>
@@ -676,7 +682,7 @@ export default function PredictAndOptimize() {
             <h2 className="text-base font-bold text-white">Stored Defect Tasks History (Database Persistence)</h2>
           </div>
           <span className="text-xs font-mono text-slate-400">
-            {storedTasks.length} Defect Tasks Saved
+            {storedLoading ? '…' : `${storedTasks.length} Defect Tasks Saved`}
           </span>
         </div>
 
@@ -711,9 +717,13 @@ export default function PredictAndOptimize() {
               ))}
             </tbody>
           </table>
-          {storedTasks.length === 0 && (
-            <div className="text-center py-6 text-slate-500 text-xs">
-              No defect tasks stored yet. Fill the form above and submit to save new defect tasks into the database.
+          {storedLoading ? (
+            <div className="text-center py-6 text-slate-400 text-xs">
+              Loading reported defect tasks…
+            </div>
+          ) : storedTasks.length === 0 && (
+            <div className="text-center py-6 text-slate-400 text-xs">
+              No defect tasks reported yet. Fill the form above and submit to save new defect tasks into the database.
             </div>
           )}
         </div>

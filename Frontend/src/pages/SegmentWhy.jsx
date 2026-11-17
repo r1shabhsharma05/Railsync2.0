@@ -32,18 +32,22 @@ export default function SegmentWhy() {
   // Fetch detailed risk prediction for the selected segment
   useEffect(() => {
     if (!selectedSegmentId) return;
+    let cancelled = false;
     async function fetchRisk() {
       try {
         setLoading(true);
         const data = await api.getSegmentRisk(selectedSegmentId);
-        setSegmentData(data);
+        if (!cancelled) setSegmentData(data);
       } catch (err) {
         console.error('Failed to load segment risk:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     fetchRisk();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedSegmentId]);
 
   const handleSelectSegment = (id) => {
@@ -64,8 +68,9 @@ export default function SegmentWhy() {
     setSimulatedRepair((prev) => !prev);
   };
 
-  // Derived metrics from real model output
-  const rawRisk = segmentData?.risk_30d || 0.05;
+  // Derived metrics from real model output (no fallback risk — the page
+  // shows a loading state until the API data for the selected segment arrives)
+  const rawRisk = segmentData?.risk_30d ?? 0;
   const displayRisk = simulatedRepair ? (rawRisk * 0.25 * 100).toFixed(1) : (rawRisk * 100).toFixed(1);
   const isCritical = rawRisk >= 0.70;
   const isModerate = rawRisk >= 0.30 && rawRisk < 0.70;
@@ -96,13 +101,20 @@ export default function SegmentWhy() {
             >
               {segmentsList.map((s) => (
                 <option key={s.segment_id} value={s.segment_id}>
-                  {s.segment_id} — {s.division} ({s.asset_type}) [{(s.risk_30d * 100).toFixed(0)}% Risk]
+                  {s.segment_id} — {s.division}{s.asset_type ? ` (${s.asset_type})` : ''} [{(s.risk_30d * 100).toFixed(0)}% Risk]
                 </option>
               ))}
             </select>
           </div>
         </div>
 
+        {/* No stale segment data on first paint — wait for the API */}
+        {loading || !segmentData ? (
+          <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm text-center font-code-sm text-code-sm text-on-surface-variant">
+            {loading ? 'Loading segment risk from the live API…' : 'No risk data available for this segment.'}
+          </div>
+        ) : (
+          <>
         {/* Asset Identity & Risk Summary Master Deck */}
         <section className="flex flex-col w-full bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
           {/* Top Telemetry Pill Strip */}
@@ -113,7 +125,7 @@ export default function SegmentWhy() {
             </div>
             <div className="flex items-center gap-space-sm font-code-sm text-code-sm normal-case">
               <span>
-                MODEL ENGINE: <strong className="text-on-surface">{segmentData?.model_version || 'Weibull AFT + XGBoost v1.0'}</strong>
+                MODEL ENGINE: <strong className="text-on-surface">{segmentData?.model_version || '—'}</strong>
               </span>
             </div>
           </div>
@@ -219,7 +231,7 @@ export default function SegmentWhy() {
               </h3>
             </div>
             <span className="font-label-caps text-label-caps text-on-surface-variant">
-              Trained Model: weibull_aft.joblib
+              Trained Model: {segmentData?.model_version || '—'}
             </span>
           </div>
 
@@ -295,6 +307,8 @@ export default function SegmentWhy() {
               : 'BOOK PREVENTIVE BLOCK'}
           </button>
         </div>
+          </>
+        )}
       </div>
     </main>
   );

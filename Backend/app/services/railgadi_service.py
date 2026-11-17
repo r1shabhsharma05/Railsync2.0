@@ -9,12 +9,14 @@ Supports multiple Indian Railways API providers:
 - data.gov.in / railgadi endpoints (fallback)
 - Published fixture fallback (offline mode)
 
-Key: rg_d08524fd0b3e4212bd1b3515f64c5bc0
+Live fetch runs only when RAILGADI_API_KEY is set in the environment.
+With no key, fixtures are used directly — no dead network calls.
 """
 
 from __future__ import annotations
 
 import hashlib
+import os
 import time
 from datetime import datetime, timedelta
 from typing import Any
@@ -26,7 +28,8 @@ from app.core.logging import get_logger
 log = get_logger("service.railgadi")
 
 # ── RailGadi API Config ──────────────────────────────────────────────────
-RAILGADI_API_KEY = "rg_d08524fd0b3e4212bd1b3515f64c5bc0"
+# Live key comes from the environment only; empty means fixtures only.
+RAILGADI_API_KEY = os.environ.get("RAILGADI_API_KEY", "")
 
 # Base URLs to try (in priority order)
 API_ENDPOINTS = [
@@ -117,7 +120,11 @@ async def fetch_train_schedule_from_api(train_no: str) -> dict | None:
 
     Tries multiple endpoints and returns the first successful response.
     Falls back to None if all fail (offline mode will use fixtures).
+    With no API key configured, returns None immediately — no dead calls.
     """
+    if not RAILGADI_API_KEY:
+        return None
+
     cache_key = f"schedule_{train_no}"
     if cache_key in _schedule_cache:
         cached = _schedule_cache[cache_key]

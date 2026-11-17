@@ -343,6 +343,16 @@ def get_current_plan(db: Session) -> Optional[BlockPlan]:
     return get_current_active_plan(db)
 
 
+def get_current_plan_by_type(db: Session, plan_type: str) -> Optional[BlockPlan]:
+    """Latest current plan of one type (weekly/monthly/what_if)."""
+    return (
+        db.query(BlockPlan)
+        .filter(BlockPlan.is_current == True, BlockPlan.plan_type == plan_type)  # noqa: E712
+        .order_by(desc(BlockPlan.created_at))
+        .first()
+    )
+
+
 def get_plan_by_id(db: Session, plan_id: str) -> Optional[BlockPlan]:
     return db.query(BlockPlan).filter(BlockPlan.plan_id == plan_id).first()
 

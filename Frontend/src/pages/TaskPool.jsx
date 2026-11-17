@@ -41,17 +41,17 @@ export default function TaskPool() {
   };
 
   // Metrics calculations from real tasks
-  const totalTasks = tasks.length || 602;
+  const totalTasks = tasks.length;
   const criticalTasks = tasks.filter((t) => t.claimed_criticality >= 4);
   const overdueTasks = tasks.filter((t) => t.overdue);
   const engTasks = tasks.filter((t) => t.department === 'Engineering' || t.department === 'TRACK');
-  const sntTasks = tasks.filter((t) => t.department === 'S&T' || t.department === 'SIGNAL');
+  const sntTasks = tasks.filter((t) => t.department === 'S&T' || t.department === 'SIG' || t.department === 'SIGNAL');
   const elecTasks = tasks.filter((t) => t.department === 'Electrical' || t.department === 'OHE');
 
   // Filtering
   const filteredTasks = tasks.filter((t) => {
     if (filterDept === 'Engineering' && t.department !== 'Engineering' && t.department !== 'TRACK') return false;
-    if (filterDept === 'S&T' && t.department !== 'S&T' && t.department !== 'SIGNAL') return false;
+    if (filterDept === 'S&T' && t.department !== 'S&T' && t.department !== 'SIG' && t.department !== 'SIGNAL') return false;
     if (filterDept === 'Electrical' && t.department !== 'Electrical' && t.department !== 'OHE') return false;
     if (filterDept === 'Critical' && t.claimed_criticality < 4) return false;
     if (filterDept === 'Overdue' && !t.overdue) return false;
@@ -105,7 +105,7 @@ export default function TaskPool() {
               Maintenance Demand Negotiation &amp; Task Pool
             </h1>
             <span className="font-code-sm text-code-sm text-on-secondary-container bg-surface-container px-space-xs py-0.5 rounded">
-              TOTAL TASKS: {totalTasks} REGISTERED
+              TOTAL TASKS: {loading ? '…' : `${totalTasks} REGISTERED`}
             </span>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function TaskPool() {
                 <span className="material-symbols-outlined text-on-surface-variant text-[16px]">format_list_bulleted</span>
               </div>
               <div className="flex items-baseline gap-space-xs mt-space-xs">
-                <span className="font-headline-xl text-headline-xl text-primary font-bold">{totalTasks}</span>
+                <span className="font-headline-xl text-headline-xl text-primary font-bold">{loading ? '—' : totalTasks}</span>
                 <span className="font-code-sm text-code-sm text-on-surface-variant">Tasks</span>
               </div>
               <div className="w-full bg-surface-container h-1 rounded-full overflow-hidden mt-space-xs">
@@ -135,11 +135,11 @@ export default function TaskPool() {
                 <span className="material-symbols-outlined text-error text-[16px]">warning</span>
               </div>
               <div className="flex items-baseline gap-space-xs mt-space-xs">
-                <span className="font-headline-xl text-headline-xl text-error font-bold">{criticalTasks.length}</span>
+                <span className="font-headline-xl text-headline-xl text-error font-bold">{loading ? '—' : criticalTasks.length}</span>
                 <span className="font-code-sm text-code-sm text-on-surface-variant">Priority 4-5</span>
               </div>
               <div className="w-full bg-surface-container h-1 rounded-full overflow-hidden mt-space-xs">
-                <div className="bg-error h-full" style={{ width: `${(criticalTasks.length / totalTasks) * 100}%` }}></div>
+                <div className="bg-error h-full" style={{ width: `${loading || totalTasks === 0 ? 0 : (criticalTasks.length / totalTasks) * 100}%` }}></div>
               </div>
             </div>
 
@@ -150,11 +150,11 @@ export default function TaskPool() {
                 <span className="material-symbols-outlined text-on-secondary-fixed-variant text-[16px]">history_toggle_off</span>
               </div>
               <div className="flex items-baseline gap-space-xs mt-space-xs">
-                <span className="font-headline-xl text-headline-xl text-on-secondary-fixed font-bold">{overdueTasks.length}</span>
+                <span className="font-headline-xl text-headline-xl text-on-secondary-fixed font-bold">{loading ? '—' : overdueTasks.length}</span>
                 <span className="font-code-sm text-code-sm text-on-surface-variant">Urgent</span>
               </div>
               <div className="w-full bg-surface-container h-1 rounded-full overflow-hidden mt-space-xs">
-                <div className="bg-secondary-fixed-dim h-full" style={{ width: `${(overdueTasks.length / totalTasks) * 100}%` }}></div>
+                <div className="bg-secondary-fixed-dim h-full" style={{ width: `${loading || totalTasks === 0 ? 0 : (overdueTasks.length / totalTasks) * 100}%` }}></div>
               </div>
             </div>
 
@@ -165,9 +165,9 @@ export default function TaskPool() {
                 <span className="material-symbols-outlined text-on-tertiary-container text-[16px]">domain</span>
               </div>
               <div className="flex items-baseline gap-space-xs mt-space-xs font-code-sm text-code-sm">
-                <span className="text-on-surface font-bold">{engTasks.length} ENG</span> •
-                <span className="text-on-surface font-bold">{sntTasks.length} S&amp;T</span> •
-                <span className="text-on-surface font-bold">{elecTasks.length} ELEC</span>
+                <span className="text-on-surface font-bold">{loading ? '—' : engTasks.length} ENG</span> •
+                <span className="text-on-surface font-bold">{loading ? '—' : sntTasks.length} S&amp;T</span> •
+                <span className="text-on-surface font-bold">{loading ? '—' : elecTasks.length} ELEC</span>
               </div>
               <div className="w-full bg-surface-container h-1 rounded-full overflow-hidden mt-space-xs">
                 <div className="bg-tertiary-container h-full w-full"></div>
@@ -189,7 +189,7 @@ export default function TaskPool() {
                     : 'bg-surface-container-lowest hover:bg-surface-container text-on-surface'
                 }`}
               >
-                {d === 'All' ? `ALL (${tasks.length})` : d}
+                {d === 'All' ? `ALL (${loading ? '…' : tasks.length})` : d}
               </button>
             ))}
           </div>
@@ -219,7 +219,7 @@ export default function TaskPool() {
                   <th className="py-space-xs px-space-sm font-bold">Dept</th>
                   <th className="py-space-xs px-space-sm font-bold">Maintenance Type</th>
                   <th className="py-space-xs px-space-sm font-bold">Criticality</th>
-                  <th className="py-space-xs px-space-sm font-bold">Duration</th>
+                  <th className="py-space-xs px-space-sm font-bold">Duration (hrs)</th>
                   <th className="py-space-xs px-space-sm font-bold">Overdue</th>
                   <th className="py-space-xs px-space-sm font-bold text-right">Actions</th>
                 </tr>
@@ -255,7 +255,7 @@ export default function TaskPool() {
                         </span>
                       </td>
                       <td className="py-space-sm px-space-sm text-on-surface-variant">
-                        {t.min_duration_hrs ? `${t.min_duration_hrs}h (min)` : `${t.planned_duration_hrs}h`}
+                        {t.min_duration_hrs ? `${t.min_duration_hrs}h` : `${t.planned_duration_hrs}h`}
                       </td>
                       <td className="py-space-sm px-space-sm">
                         {t.overdue ? (
@@ -294,7 +294,7 @@ export default function TaskPool() {
             )}
           </div>
           <div className="text-right text-on-surface-variant font-code-sm text-code-sm">
-            Showing top {Math.min(30, filteredTasks.length)} of {filteredTasks.length} filtered tasks.
+            Showing top {Math.min(30, filteredTasks.length)} of {loading ? '…' : filteredTasks.length} filtered tasks.
           </div>
         </div>
       </div>

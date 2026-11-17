@@ -2,6 +2,8 @@
 
 NEVER modifies the current plan. Clones planning state, injects disruption,
 re-optimizes using Layer 3 reoptimize_fast, and diffs against the baseline plan.
+Simulation only: never creates Task rows or changes task statuses — the
+simulated Plan B references existing tasks, it does not own them.
 """
 
 from __future__ import annotations
@@ -154,24 +156,8 @@ def run_whatif(db: Session, request: WhatIfRequest) -> WhatIfResponse:
             "is_current": False,
         })
 
-        # Upsert emergency tasks into database so foreign key constraints are satisfied
-        for em in disruption.emergency_tasks:
-            crit_int = 5 if em.claimed_criticality == "CRITICAL" else (4 if em.claimed_criticality == "HIGH" else (3 if em.claimed_criticality == "MEDIUM" else 2))
-            repo.upsert_task(db, **{
-                "task_id": em.task_id,
-                "segment_id": em.segment,
-                "department": "TRACK",
-                "task_type": em.description or "Emergency Defect",
-                "claimed_criticality": crit_int,
-                "min_duration_hrs": em.min_duration_hrs,
-                "preferred_window_start": base_date,
-                "preferred_window_end": base_date + timedelta(hours=6),
-                "overdue": True,
-                "status": "disruption",
-            })
-
-
-        # 6. Format Plan B assignments and diffs
+        # NOTE: emergency tasks stay in-memory only. They are synthetic
+        # (DISRUPTION-*) and must never become real Task rows.        # 6. Format Plan B assignments and diffs
         plan_b_assignments: list[AssignmentOut] = []
         for st in whatif_res.revised_schedule.scheduled_tasks:
             if st.status == "SCHEDULED" and st.assigned_block:
@@ -230,32 +216,25 @@ def run_whatif(db: Session, request: WhatIfRequest) -> WhatIfResponse:
                 )
                 plan_b_assignments.append(a_out)
 
-                # Ensure task exists in DB before saving assignment
-                repo.upsert_task(
-                    db,
-                    task_id=a_out.task_id,
-                    segment_id=a_out.segment_id,
-                    department=a_out.department,
-                    task_type="Emergency Disruption Task",
-                    claimed_criticality=5,
-                    min_duration_hrs=a_out.duration_hrs,
-                    status="scheduled",
-                )
-
-                repo.save_assignment(db, **{
-                    "plan_id": plan_id,
-                    "task_id": a_out.task_id,
-                    "segment_id": a_out.segment_id,
-                    "department": a_out.department,
-                    "block_start": a_out.block_start,
-                    "block_end": a_out.block_end,
-                    "duration_hrs": a_out.duration_hrs,
-                    "priority": a_out.priority,
-                    "risk_30d": a_out.risk_30d,
-                    "reason": a_out.reason,
-                    "explanation": a_out.explanation,
-                    "consolidation_group": a_out.consolidation_group,
-                })
+                # Simulated Plan B only: persist the assignment for real tasks.
+                # Never create Task rows or change task status — synthetic
+                # emergency tasks have no Task row (their FK would fail) and
+                # stay in the response only.
+                if st.task_id in task_meta:
+                    repo.save_assignment(db, **{
+                        "plan_id": plan_id,
+                        "task_id": a_out.task_id,
+                        "segment_id": a_out.segment_id,
+                        "department": a_out.department,
+                        "block_start": a_out.block_start,
+                        "block_end": a_out.block_end,
+                        "duration_hrs": a_out.duration_hrs,
+                        "priority": a_out.priority,
+                        "risk_30d": a_out.risk_30d,
+                        "reason": a_out.reason,
+                        "explanation": a_out.explanation,
+                        "consolidation_group": a_out.consolidation_group,
+                    })
 
         db.commit()
 

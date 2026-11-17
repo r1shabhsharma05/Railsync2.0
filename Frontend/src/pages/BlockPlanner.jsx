@@ -133,7 +133,7 @@ export default function BlockPlanner() {
                   Train Timetable & Possession Planner
                 </h1>
                 <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">
-                  RAILGADI LIVE FEED • NCR / PRYJ DIVISION • AUTOMATED CP-SAT ENGINE
+                  RAILGADI PUBLISHED TIMETABLE • NCR / PRYJ DIVISION • AUTOMATED CP-SAT ENGINE
                 </span>
               </div>
             </div>
@@ -234,11 +234,11 @@ export default function BlockPlanner() {
               <div className="flex items-center gap-space-xs">
                 <span className="material-symbols-outlined text-primary text-[20px]">train</span>
                 <h2 className="font-headline-sm text-headline-sm text-on-surface font-bold">
-                  Live Corridor Train Schedule
+                  Corridor Train Schedule
                 </h2>
               </div>
               <span className="font-code-sm text-code-sm text-on-surface-variant">
-                Delhi–Mumbai Rajdhani Corridor •{' '}
+                NDLS–DDU Corridor •{' '}
                 <strong className="text-primary">{liveTimetable?.trains?.length || 0}</strong> trains tracked
               </span>
             </div>
@@ -283,7 +283,7 @@ export default function BlockPlanner() {
                           <td className="py-space-sm px-space-sm font-bold text-primary">
                             {train.train_number}
                           </td>
-                          <td className="py-space-sm px-space-sm font-semibold text-on-surface max-w-[260px] truncate">
+                          <td className="py-space-sm px-space-sm font-semibold text-on-surface">
                             {train.train_name}
                           </td>
                           <td className="py-space-sm px-space-sm">

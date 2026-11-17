@@ -18,15 +18,20 @@ import "./gallery.css";
  * the screen and only a third of a turn is on screen at once, which reads as a
  * band of images rather than a thread. Narrow it and several turns fit, and it
  * reads as what it is.
+ *
+ * Spread is capped so the ball fits its hero column: at spread 1 the sphere
+ * needs ~1070px across but the column is ~690px at desktop, so the surface
+ * clipped the outer cards. These values keep every card inside the column
+ * at 1366px without shrinking the cards (their text is sized for 112px).
  */
 const FRAME = {
   sphere: {
-    vertical: { spread: 1, camera: SPHERE.cameraPerRadius },
-    horizontal: { spread: 1, camera: SPHERE.cameraPerRadius },
+    vertical: { spread: 0.56, camera: SPHERE.cameraPerRadius },
+    horizontal: { spread: 0.56, camera: SPHERE.cameraPerRadius },
   },
   spiral: {
-    vertical: { spread: 0.62, camera: 1.95 },
-    horizontal: { spread: 0.74, camera: 2.0 },
+    vertical: { spread: 0.48, camera: 1.95 },
+    horizontal: { spread: 0.5, camera: 2.0 },
   },
 };
 

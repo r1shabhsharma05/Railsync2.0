@@ -129,10 +129,6 @@ export default function Sidebar() {
       {/* Ticker & System Telemetry Footer */}
       <div className="p-3 bg-[#080f1d] border-t border-[#1a2942] text-[11px] font-code-sm shrink-0 flex flex-col gap-1.5">
         <div className="flex items-center justify-between text-slate-400">
-          <span className="uppercase tracking-wider font-semibold">FOIS / COA</span>
-          <span className="text-slate-300">SYNC: 42s ago</span>
-        </div>
-        <div className="flex items-center justify-between text-slate-400">
           <span className="uppercase tracking-wider font-semibold">CRIS LINK</span>
           <span className="flex items-center gap-1.5 text-on-tertiary-container font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-on-tertiary-container animate-pulse"></span>

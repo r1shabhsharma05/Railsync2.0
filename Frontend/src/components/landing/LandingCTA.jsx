@@ -10,12 +10,12 @@ import { useScrollReveal } from './useScrollReveal';
  */
 export default function LandingCTA() {
   const sectionRef = useScrollReveal();
-  const [corridor, setCorridor] = useState('Delhi – Kanpur');
+  const [corridor, setCorridor] = useState('NDLS – DDU');
   const [week, setWeek] = useState('This week');
 
   const loginTo =
     '/login?corridor=' +
-    encodeURIComponent(corridor.trim() || 'Delhi – Kanpur') +
+    encodeURIComponent(corridor.trim() || 'NDLS – DDU') +
     '&week=' +
     encodeURIComponent(week);
 

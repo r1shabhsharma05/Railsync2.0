@@ -43,15 +43,15 @@ const SPHERE_ITEMS = [
   { id: 'twin', icon: 'developer_board', title: 'Digital Twin', line: 'The corridor, live',
     detail: 'Digital Twin — the corridor as a living map: every segment, task and block in one view.',
     announce: 'Digital Twin: the corridor, live.' },
-  { id: 'segments', icon: 'route', title: '46 segments', line: 'Delhi–Kanpur, mapped',
-    detail: '46 segments — the whole Delhi–Kanpur corridor, mapped and scored.',
-    announce: '46 segments on the Delhi Kanpur corridor.' },
+  { id: 'segments', icon: 'route', title: '50 segments', line: 'NDLS–DDU, mapped',
+    detail: '50 segments — the whole NDLS–DDU corridor, mapped and scored.',
+    announce: '50 segments on the NDLS–DDU corridor.' },
   { id: 'depts', icon: 'groups_3', title: '3 departments', line: 'One shared plan',
     detail: '3 departments — engineering, operations and traffic negotiate on one shared plan.',
     announce: '3 departments on one shared plan.' },
-  { id: 'corridor', icon: null, title: 'Delhi – Kanpur', line: 'The corridor',
-    detail: 'Delhi–Kanpur — the corridor RailSync plans, end to end.',
-    announce: 'Delhi Kanpur corridor.', photo: TRACK_PHOTO },
+  { id: 'corridor', icon: null, title: 'NDLS – DDU', line: 'The corridor',
+    detail: 'NDLS–DDU — the corridor RailSync plans, end to end.',
+    announce: 'NDLS–DDU corridor.', photo: TRACK_PHOTO },
 ];
 
 function sphereCard(item) {
@@ -123,7 +123,7 @@ export default function LandingHero() {
                 <span className="rs-icon-chip" style={{ width: 32, height: 32 }}>
                   <LigIcon name="route" />
                 </span>
-                46 segments
+                50 segments
               </span>
               <span className="flex items-center gap-2 text-[15px] font-semibold text-[var(--ink)]">
                 <span className="rs-icon-chip" style={{ width: 32, height: 32 }}>
@@ -181,7 +181,6 @@ export default function LandingHero() {
               </div>
             </div>
             <p className="mt-4 text-[15px] leading-[1.5] text-[var(--ink)]" aria-live="polite">
-              <span className="font-semibold">{selected.title} — </span>
               {selected.detail}
             </p>
           </div>

@@ -36,16 +36,19 @@ export default function LandingProblem() {
     <section id="problem" className="bg-[var(--bg)]">
       <div ref={sectionRef} className="rs-reveal rs-wrap py-[96px] md:py-[22vh]">
         <h2 className="font-display text-left md:text-center text-[8vw] md:text-[clamp(32px,4.2vw,62px)] leading-[1.12] md:leading-[1.12] text-[var(--ink)] max-w-full md:max-w-[66%] mx-auto">
-          Railway{' '}
+          {/* Inline photos are decorative here — the heading text already
+              says it. Empty alt keeps screen readers (and text extraction)
+              on the intended copy instead of reading the alt words inline. */}
+          Railway track{' '}
           <img
             src="/images/close-up-of-railway-track.jpg"
-            alt="Railway track"
+            alt=""
             className="inline-block h-[0.85em] w-[1.3em] object-cover align-[-0.1em] rounded-[0.14em] mx-[0.12em]"
           />
           maintenance is a scheduling{' '}
           <img
             src="/images/wadi-rum-railway-track-hejaz-railway-jordan.jpg"
-            alt="Railway corridor"
+            alt=""
             className="inline-block h-[0.85em] w-[1.3em] object-cover align-[-0.1em] rounded-[0.14em] mx-[0.12em]"
           />
           problem.

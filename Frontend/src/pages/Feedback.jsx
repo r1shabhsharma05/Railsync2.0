@@ -3,6 +3,7 @@ import { api } from '../services/api';
 
 export default function Feedback() {
   const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState('');
   const [actualDuration, setActualDuration] = useState('');
@@ -13,6 +14,7 @@ export default function Feedback() {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       const [metRes, planRes] = await Promise.allSettled([
         api.getFeedbackMetrics(),
         api.getCurrentPlan('weekly'),
@@ -27,6 +29,8 @@ export default function Feedback() {
       }
     } catch (err) {
       console.error('Error loading feedback data:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,14 +87,14 @@ export default function Feedback() {
             <div className="flex items-center gap-space-xs bg-surface-container-lowest px-space-xs py-0.5 rounded shadow-sm">
               <span className="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
               <span className="font-label-caps text-label-caps text-on-surface uppercase">
-                CALIBRATION ACTIVE
+                {loading ? 'LOADING…' : metrics?.total_executed_blocks > 0 ? 'CALIBRATION ACTIVE' : 'AWAITING FEEDBACK'}
               </span>
             </div>
           </div>
           <div className="flex items-center justify-between text-on-surface-variant font-code-sm text-code-sm">
-            <span>NETWORK: AGRA &amp; DELHI CORRIDORS (413 SCHEDULED POSSESSIONS)</span>
+            <span>NETWORK: AGRA &amp; DELHI CORRIDORS ({loading ? '…' : `${assignments.length} SCHEDULED POSSESSIONS`})</span>
             <span className="font-label-caps text-label-caps bg-secondary-container text-on-secondary-container px-space-xs py-0.5 rounded">
-              CONTINUOUS LEARNING
+              {loading ? 'LOADING…' : metrics?.total_executed_blocks > 0 ? 'CONTINUOUS LEARNING' : 'FEEDBACK LOOP OPEN'}
             </span>
           </div>
         </div>
@@ -100,7 +104,7 @@ export default function Feedback() {
           <div className="flex flex-col bg-surface-container-lowest p-space-md rounded shadow-sm">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Total Feedback Logs</span>
             <span className="font-headline-lg text-headline-lg text-on-surface font-bold my-1">
-              {metrics?.total_feedback_records || 0}
+              {loading ? '—' : metrics?.total_executed_blocks ?? '—'}
             </span>
             <span className="font-body-sm text-body-sm text-on-surface-variant">Validated by Divisional Control</span>
           </div>
@@ -108,7 +112,9 @@ export default function Feedback() {
           <div className="flex flex-col bg-surface-container-lowest p-space-md rounded shadow-sm">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Avg Block Overrun</span>
             <span className="font-headline-lg text-headline-lg text-on-tertiary-container font-bold my-1">
-              +{metrics?.average_overrun_hrs ? metrics.average_overrun_hrs.toFixed(1) : '0.0'}h
+              {loading || metrics?.average_duration_error == null
+                ? '—'
+                : `${metrics.average_duration_error >= 0 ? '+' : ''}${metrics.average_duration_error.toFixed(1)}h`}
             </span>
             <span className="font-body-sm text-body-sm text-on-surface-variant">Target threshold: &lt; 0.5h</span>
           </div>
@@ -116,19 +122,36 @@ export default function Feedback() {
           <div className="flex flex-col bg-surface-container-lowest p-space-md rounded shadow-sm">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">On-Time Completion</span>
             <span className="font-headline-lg text-headline-lg text-primary font-bold my-1">
-              {metrics?.on_time_rate ? `${(metrics.on_time_rate * 100).toFixed(0)}%` : '96%'}
+              {loading || metrics?.overrun_rate == null
+                ? '—'
+                : `${((1 - metrics.overrun_rate) * 100).toFixed(0)}%`}
             </span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">High Compliance</span>
+            <span className="font-body-sm text-body-sm text-on-surface-variant">Share of blocks within plan</span>
           </div>
 
           <div className="flex flex-col bg-surface-container-lowest p-space-md rounded shadow-sm">
-            <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Model Duration Accuracy</span>
+            <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Planning Trend</span>
             <span className="font-headline-lg text-headline-lg text-on-tertiary-container font-bold my-1">
-              94.2%
+              {loading
+                ? '—'
+                : metrics?.trend === 'improving'
+                ? 'Improving'
+                : metrics?.trend === 'worsening'
+                ? 'Worsening'
+                : metrics?.trend === 'stable'
+                ? 'Stable'
+                : 'No data yet'}
             </span>
-            <span className="font-body-sm text-body-sm text-on-surface-variant">XGBoost Regressor R²</span>
+            <span className="font-body-sm text-body-sm text-on-surface-variant">Recent vs earlier duration error</span>
           </div>
         </div>
+
+        {/* Honest empty state: no feedback recorded yet */}
+        {!loading && metrics?.total_executed_blocks === 0 && (
+          <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm font-code-sm text-code-sm text-on-surface-variant">
+            No executed blocks recorded yet — submit feedback below to start calibration. On-time rate, overrun and trend appear here once blocks are audited.
+          </div>
+        )}
 
         {/* 2. Submit Execution Feedback Form */}
         <div className="bg-surface-container-lowest rounded-lg p-space-md shadow-sm flex flex-col gap-space-md">
@@ -151,6 +174,7 @@ export default function Feedback() {
               </label>
               <select
                 value={selectedAssignmentId}
+                disabled={loading || assignments.length === 0}
                 onChange={(e) => {
                   setSelectedAssignmentId(e.target.value);
                   const sel = assignments.find((a) => String(a.id) === e.target.value);
@@ -158,11 +182,17 @@ export default function Feedback() {
                 }}
                 className="h-8 px-space-sm bg-surface-container-low text-on-surface font-code-sm text-code-sm rounded focus:outline-none font-bold"
               >
-                {assignments.slice(0, 30).map((a) => (
-                  <option key={a.id || a.task_id} value={a.id}>
-                    {a.task_id} ({a.segment_id} • {a.department} • {a.duration_hrs}h planned)
-                  </option>
-                ))}
+                {loading ? (
+                  <option value="">Loading assignments…</option>
+                ) : assignments.length === 0 ? (
+                  <option value="">No assignments available</option>
+                ) : (
+                  assignments.slice(0, 30).map((a) => (
+                    <option key={a.id || a.task_id} value={a.id}>
+                      {a.task_id} ({a.segment_id} • {a.department} • {a.duration_hrs}h planned)
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 

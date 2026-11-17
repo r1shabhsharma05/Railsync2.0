@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 
-const DEFAULT_SEGMENTS = [
-  { segment_id: 'SEG-002', division: 'Agra', asset_type: 'Track / OHE' },
-  { segment_id: 'SEG-039', division: 'Delhi', asset_type: 'Signal / Point' },
-  { segment_id: 'SEG-126', division: 'Agra', asset_type: 'Track / Weld' },
-  { segment_id: 'SEG-088', division: 'Delhi', asset_type: 'Turnout / Crossover' },
-  { segment_id: 'SEG-001', division: 'Agra', asset_type: 'Track Main' },
-];
-
 export default function WhatIfSandbox() {
-  const [segments, setSegments] = useState(DEFAULT_SEGMENTS);
-  const [targetSegment, setTargetSegment] = useState('SEG-002');
+  const [segments, setSegments] = useState([]);
+  const [loadingSegs, setLoadingSegs] = useState(true);
+  const [targetSegment, setTargetSegment] = useState('');
   const [scenarioType, setScenarioType] = useState('track_defect');
   const [severity, setSeverity] = useState('critical');
   const [time, setTime] = useState('15:30');
@@ -29,6 +22,8 @@ export default function WhatIfSandbox() {
         }
       } catch (err) {
         console.error('Failed to load segments:', err);
+      } finally {
+        setLoadingSegs(false);
       }
     }
     loadSegs();
@@ -128,14 +123,21 @@ export default function WhatIfSandbox() {
               </label>
               <select
                 value={targetSegment}
+                disabled={loadingSegs || segments.length === 0}
                 onChange={(e) => setTargetSegment(e.target.value)}
                 className="w-full h-8 px-space-sm bg-surface-container-low text-on-surface font-code-sm text-code-sm rounded focus:outline-none focus:bg-surface-container cursor-pointer font-bold"
               >
-                {segments.map((s) => (
-                  <option key={s.segment_id} value={s.segment_id}>
-                    {s.segment_id} ({s.division || 'Agra/Delhi'} • {s.asset_type || 'Main Line'})
-                  </option>
-                ))}
+                {loadingSegs ? (
+                  <option value="">Loading segments…</option>
+                ) : segments.length === 0 ? (
+                  <option value="">No segments available</option>
+                ) : (
+                  segments.map((s) => (
+                    <option key={s.segment_id} value={s.segment_id}>
+                      {s.segment_id} ({[s.division, s.asset_type].filter(Boolean).join(' • ') || '—'})
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
@@ -178,6 +180,17 @@ export default function WhatIfSandbox() {
         </section>
 
         {/* SECTION 2: Simulation Impact & Contingency Plan */}
+        {!simulationResult && (
+          <section className="bg-surface-container-lowest p-space-md rounded shadow-sm">
+            <div className="flex items-center gap-space-xs">
+              <span className="material-symbols-outlined text-primary text-[20px]">info</span>
+              <h2 className="font-headline-sm text-headline-sm text-on-surface">2. Contingency Plan B — Not Run Yet</h2>
+            </div>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-space-xs">
+              Pick a target segment, disruption scenario and severity above, then run the re-optimizer. Plan B, the rescheduled assignments and the displaced tasks will appear here.
+            </p>
+          </section>
+        )}
         {simulationResult && (
           <section className="flex flex-col bg-surface-container-lowest p-space-md rounded shadow-sm gap-space-md">
             <div className="flex items-center justify-between flex-wrap gap-space-xs border-b border-surface-container pb-space-xs">
