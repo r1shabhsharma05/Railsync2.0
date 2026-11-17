@@ -285,8 +285,14 @@ def _model_predict(segment: dict[str, Any], row: Dict[str, Any]) -> Dict[str, An
     hazard = min(max(hazard, 1e-8), 1 - 1e-8)
     risk_val = round(1 - (1 - hazard) ** 30, 6)
     age = float(row.get("age_years", 25.0))
-    prev_dur = round(float(2.0 + risk_val * 2.5), 2)
-    overrun_p = round(float(min(0.95, max(0.05, 0.1 + risk_val * 0.35))), 4)
+    # Duration / overrun come from the segment's own Layer 0 history (measured,
+    # not predicted — the trained duration/overrun heads take only age+length
+    # and return near-constant values). Fall back to the risk formulas when a
+    # segment has no task history.
+    hist_dur = row.get("hist_mean_planned_duration_hrs")
+    prev_dur = round(float(hist_dur), 2) if hist_dur is not None else round(float(2.0 + risk_val * 2.5), 2)
+    hist_rate = row.get("hist_overrun_rate")
+    overrun_p = round(float(hist_rate), 4) if hist_rate is not None else round(float(min(0.95, max(0.05, 0.1 + risk_val * 0.35))), 4)
     exp_down = round(float(risk_val * 4.5), 3)
     conf = "high" if risk_val >= 0.7 or age >= 35 else ("medium" if risk_val >= 0.001 else "low")
     curve = [
