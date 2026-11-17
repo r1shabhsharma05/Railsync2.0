@@ -227,11 +227,27 @@ def run_pareto(db: Session) -> dict[str, Any]:
     """Computes Pareto frontier across policies directly via Layer 3 compute_pareto_frontier().
 
     The frontier depends only on the planning state, so the result is cached
-    per state: current plan ids + task count + risk-prediction count. A new
+    per state: current plan ids + task count + segment count. A new
     optimize run, ingested task, or risk prediction changes the key and
     recomputes; repeat calls on unchanged state return the cached result
-    instead of re-running 3 CP-SAT solves.
+    instead of re-running 3 CP-SAT solves. The key is built from COUNT
+    queries first, so a cache hit skips the full task/risk loads too —
+    on the live DB those loads alone cost seconds.
     """
+    weekly = repo.get_current_plan_by_type(db, "weekly")
+    monthly = repo.get_current_plan_by_type(db, "monthly")
+    pending_count = repo.count_tasks_by_status(db, "pending")
+    task_count = pending_count if pending_count else repo.count_tasks(db)
+    cache_key = (
+        weekly.plan_id if weekly else None,
+        monthly.plan_id if monthly else None,
+        task_count,
+        repo.count_segments(db),
+    )
+    cached = _pareto_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     tasks = task_service.get_pending_tasks(db)
     if not tasks:
         # Fall back to all tasks (scheduled, etc.) so pareto still works post-optimization
@@ -241,18 +257,6 @@ def run_pareto(db: Session) -> dict[str, Any]:
     if not tasks:
         raise ValueError("No tasks available for Pareto frontier analysis.")
     risk_data = risk_service.get_risk_data_map(db)
-
-    weekly = repo.get_current_plan_by_type(db, "weekly")
-    monthly = repo.get_current_plan_by_type(db, "monthly")
-    cache_key = (
-        weekly.plan_id if weekly else None,
-        monthly.plan_id if monthly else None,
-        len(tasks),
-        len(risk_data),
-    )
-    cached = _pareto_cache.get(cache_key)
-    if cached is not None:
-        return cached
 
     # Real published timetable fixture (Delhi–Mumbai Rajdhani / Express corridor)
     timetable = generate_timetable(seed=42, use_real_fixture=True)

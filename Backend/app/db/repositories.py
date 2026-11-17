@@ -135,6 +135,20 @@ def get_all_tasks(db: Session) -> list[MaintenanceTask]:
     return db.query(MaintenanceTask).order_by(MaintenanceTask.created_at.desc()).all()
 
 
+def count_tasks_by_status(db: Session, status: str) -> int:
+    _ensure_tasks_synced(db)
+    return db.query(MaintenanceTask).filter(MaintenanceTask.status == status).count()
+
+
+def count_tasks(db: Session) -> int:
+    _ensure_tasks_synced(db)
+    return db.query(MaintenanceTask).count()
+
+
+def count_segments(db: Session) -> int:
+    return db.query(Segment).count()
+
+
 def upsert_task(db: Session, **kwargs) -> tuple[MaintenanceTask, bool]:
     """Returns (task, created). If task_id exists, updates it.
     
