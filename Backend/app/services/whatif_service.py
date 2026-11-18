@@ -295,6 +295,7 @@ def run_whatif(db: Session, request: WhatIfRequest) -> WhatIfResponse:
                 "status": "simulated",
             },
             changed_assignments=plan_diffs,
+            assignments=plan_b_assignments,
             added_assignments=added_outs,
             removed_assignments=removed_outs,
             reason=reasons,
