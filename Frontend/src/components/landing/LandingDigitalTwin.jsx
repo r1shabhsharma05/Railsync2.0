@@ -1,51 +1,33 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useScrollReveal } from './useScrollReveal';
+import { useLiveRiskSegments, riskTier, tierColor, segmentDetail } from './useLiveRiskSegments';
 
-/* The corridor twin, simulated for demonstration — labelled as such. */
-export const TWIN_SEGMENTS = [
-  {
-    id: 'A',
-    label: 'Segment A',
-    km: 'Km 0 – 18',
-    status: 'Low risk',
-    risk: 0.15,
-    bar: 'w-[15%] bg-[#34c759]',
-    dot: '#34c759',
-    block: 'None scheduled',
-    note: 'Risk within range. Routine inspection goes to a night window with no train path conflicts.',
-  },
-  {
-    id: 'B',
-    label: 'Segment B',
-    km: 'Km 18 – 42',
-    status: 'Maintenance due',
-    risk: 0.72,
-    bar: 'w-[72%] bg-[var(--accent)]',
-    dot: 'var(--accent)',
-    block: 'Block B-12: tamping, 02:00–04:30',
-    note: 'Elevated risk. Block B-12 takes the next available window, respecting train headways.',
-  },
-  {
-    id: 'C',
-    label: 'Segment C',
-    km: 'Km 42 – 65',
-    status: 'Nominal',
-    risk: 0.28,
-    bar: 'w-[28%] bg-[#6ea8fe]',
-    dot: '#6ea8fe',
-    block: 'OHE inspection, next window',
-    note: 'Risk within range. OHE inspection assigned to a night window without train path conflicts.',
-  },
-];
+/* The corridor twin, live: the three tabs are the highest-risk segments
+   from /risk/segments, with their real risk, division and recommended
+   block. Nothing on this fragment is invented anymore. */
 
-const DEFAULT_REQUEST = `Track tamping — Seg B, Civil, HIGH
-OHE inspection — Seg C, Electrical, MEDIUM
-Signal cable renewal — Seg A, S&T, LOW`;
+// A request names a segment by its live id (SEG-039, or just 039); the
+// twin only follows the three segments it shows.
+function parseSegmentId(text, candidates) {
+  const m = text.match(/SEG[- ]?(\d{3})/i) || text.match(/\b(\d{3})\b/);
+  if (!m) return null;
+  const id = `SEG-${m[1]}`;
+  return candidates.some((s) => s.segment_id === id) ? id : null;
+}
 
-function parseSegment(text) {
-  const m =
-    text.match(/seg(?:ment)?[\s-]*([ABC])/i) || text.match(/\b([ABC])\b/);
-  return m ? m[1].toUpperCase() : 'B';
+// Sample request lines, built from the live segments once they arrive:
+// the work type fixes the department (tamping → TRACK, OHE → OHE,
+// signal → SIG), the segment and the priority are the sample's own.
+function sampleRequest(top3) {
+  const kinds = [
+    ['Track tamping', 'TRACK', 'HIGH'],
+    ['OHE inspection', 'OHE', 'MEDIUM'],
+    ['Signal cable renewal', 'SIG', 'LOW'],
+  ];
+  return top3
+    .slice(0, 3)
+    .map((s, i) => `${kinds[i][0]} — ${s.segment_id}, ${kinds[i][1]}, ${kinds[i][2]}`)
+    .join('\n');
 }
 
 const POINTS = [
@@ -62,18 +44,35 @@ const POINTS = [
 /**
  * Digital twin — Adomate's lime feature section, RailSync's tangerine.
  * Copy on the left (eyebrow, headline, two hairline-divided points), the
- * live twin fragment on the right. Type a segment letter and the twin
+ * live twin fragment on the right. Mention a segment ID and the twin
  * follows. The fragment is the product's dark UI on the tangerine field.
  */
 export default function LandingDigitalTwin() {
   const sectionRef = useScrollReveal();
-  const [request, setRequest] = useState(DEFAULT_REQUEST);
-  const [selected, setSelected] = useState('B');
-  const seg = TWIN_SEGMENTS.find((s) => s.id === selected) || TWIN_SEGMENTS[1];
+  const { top3, loading, error } = useLiveRiskSegments();
+  const [request, setRequest] = useState(
+    'Paste a maintenance request mentioning a segment ID.',
+  );
+  const [edited, setEdited] = useState(false);
+  const [selected, setSelected] = useState(null);
+
+  // Once the live segments arrive, fill in the sample request and select
+  // the highest-risk segment — unless the visitor already typed or picked.
+  useEffect(() => {
+    if (!loading && !error && top3.length > 0) {
+      if (!edited) setRequest(sampleRequest(top3));
+      if (selected === null) setSelected(top3[0].segment_id);
+    }
+  }, [loading, error, top3, edited, selected]);
+
+  const seg =
+    top3.find((s) => s.segment_id === selected) || top3[0] || null;
 
   const onRequestChange = (text) => {
     setRequest(text);
-    setSelected(parseSegment(text));
+    setEdited(true);
+    const id = parseSegmentId(text, top3);
+    if (id) setSelected(id);
   };
 
   return (
@@ -113,7 +112,9 @@ export default function LandingDigitalTwin() {
               <span className="font-display text-[20px] leading-none text-[var(--ink)]">
                 NDLS – DDU corridor
               </span>
-              <span className="rs-frag-label shrink-0">Simulated data</span>
+              <span className="rs-frag-label shrink-0">
+                {error ? 'Live data unavailable' : loading ? 'Loading…' : 'Live data'}
+              </span>
             </div>
 
             <textarea
@@ -125,58 +126,82 @@ export default function LandingDigitalTwin() {
               className="w-full bg-transparent text-white text-[16px] leading-[1.5] border border-white/25 p-3 outline-none focus-visible:outline-white resize-none mb-4"
             />
 
-            <div className="grid grid-cols-3 gap-2 mb-4" role="tablist" aria-label="Corridor segments">
-              {TWIN_SEGMENTS.map((s) => (
-                <button
-                  key={s.id}
-                  role="tab"
-                  aria-selected={selected === s.id}
-                  onClick={() => setSelected(s.id)}
-                  className={`text-left p-3 border cursor-pointer transition-colors ${
-                    selected === s.id
-                      ? 'bg-[#22304d] border-[#e8ecf5]'
-                      : 'bg-transparent border-[var(--ui-edge)] hover:border-[var(--muted)]'
-                  }`}
-                >
-                  <span className="block text-[13px] font-semibold text-[var(--ink)] mb-1">
-                    {s.label}
-                  </span>
-                  <span className="block text-[13px] text-[var(--muted)] mb-2">
-                    {s.km}
-                  </span>
-                  <span className="block h-1.5 w-full bg-[var(--ui-edge)] overflow-hidden">
-                    <span className={`block h-full ${s.bar}`} />
-                  </span>
-                  <span className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
-                    <span className="rs-risk-dot" style={{ background: s.dot }} />
-                    {s.status}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <div className="rs-frag-label mb-1">Risk score</div>
-                <div className="rs-frag-value rs-frag-mono">
-                  {seg.risk.toFixed(2)} / 1.0
+            {loading || error ? (
+              <p className="text-[15px] leading-[1.5] text-[var(--muted)] mb-4">
+                {error
+                  ? 'Live segment data could not be loaded — see the dashboard for current values.'
+                  : 'Loading live segment data…'}
+              </p>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2 mb-4" role="tablist" aria-label="Highest-risk segments">
+                  {top3.map((s) => {
+                    const risk = s.risk_30d ?? 0;
+                    return (
+                      <button
+                        key={s.segment_id}
+                        role="tab"
+                        aria-selected={selected === s.segment_id}
+                        onClick={() => setSelected(s.segment_id)}
+                        className={`text-left p-3 border cursor-pointer transition-colors ${
+                          selected === s.segment_id
+                            ? 'bg-[#22304d] border-[#e8ecf5]'
+                            : 'bg-transparent border-[var(--ui-edge)] hover:border-[var(--muted)]'
+                        }`}
+                      >
+                        <span className="block text-[13px] font-semibold text-[var(--ink)] mb-1">
+                          {s.segment_id}
+                        </span>
+                        <span className="block text-[13px] text-[var(--muted)] mb-2">
+                          {s.division ? `${s.division} division` : 'Corridor'}
+                        </span>
+                        <span className="block h-1.5 w-full bg-[var(--ui-edge)] overflow-hidden">
+                          <span
+                            className="block h-full"
+                            style={{ width: `${(risk * 100).toFixed(1)}%`, background: tierColor(risk) }}
+                          />
+                        </span>
+                        <span className="mt-2 flex items-center gap-1.5 text-[13px] font-semibold text-[var(--ink)]">
+                          <span className="rs-risk-dot" style={{ background: tierColor(risk) }} />
+                          {riskTier(risk)}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
-              <div>
-                <div className="rs-frag-label mb-1">Status</div>
-                <div className="rs-frag-value">{seg.status}</div>
-              </div>
-              <div>
-                <div className="rs-frag-label mb-1">Scheduled block</div>
-                <div className="rs-frag-value">{seg.block}</div>
-              </div>
-            </div>
-            <p className="mt-4 text-[15px] leading-[1.5] text-[var(--muted)]">
-              {seg.note}
-            </p>
+
+                {seg && (
+                  <>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <div className="rs-frag-label mb-1">Risk score</div>
+                        <div className="rs-frag-value rs-frag-mono">
+                          {(seg.risk_30d ?? 0).toFixed(2)} / 1.0
+                        </div>
+                      </div>
+                      <div>
+                        <div className="rs-frag-label mb-1">Status</div>
+                        <div className="rs-frag-value">{riskTier(seg.risk_30d ?? 0)}</div>
+                      </div>
+                      <div>
+                        <div className="rs-frag-label mb-1">Recommended block</div>
+                        <div className="rs-frag-value">
+                          {seg.preventive_block_duration_hrs != null
+                            ? `${seg.preventive_block_duration_hrs}h`
+                            : '—'}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-[15px] leading-[1.5] text-[var(--muted)]">
+                      {segmentDetail(seg)}
+                    </p>
+                  </>
+                )}
+              </>
+            )}
           </div>
           <p className="mt-4 text-[15px] leading-[1.5] text-[var(--muted)] max-w-[40ch]">
-            Change a segment letter — A, B or C — and the twin follows.
+            Click a segment — or mention its ID in the request — and the twin follows.
           </p>
         </div>
       </div>

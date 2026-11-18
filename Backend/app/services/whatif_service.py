@@ -62,7 +62,7 @@ def run_whatif(db: Session, request: WhatIfRequest) -> WhatIfResponse:
 
         # Real published timetable fixture (NDLS–DDU corridor)
         timetable = generate_timetable(seed=42, use_real_fixture=True)
-        base_date = datetime(2026, 9, 15, 0, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         all_blocks = layer3.build_block_windows(timetable=timetable, horizon_days=7, base_date=base_date)
 
         # Enforce chronological consistency: elapsed blocks cannot receive newly injected emergencies
@@ -328,7 +328,7 @@ def _create_disruption_task(request: WhatIfRequest) -> dict[str, Any]:
     severity_to_crit = {"low": 3, "moderate": 4, "critical": 5, "emergency": 5, "high": 4}
     crit = severity_to_crit.get(str(request.severity).lower(), 4)
 
-    base = datetime(2026, 9, 15, parse_hour, 0, 0)
+    base = datetime.now().replace(hour=parse_hour, minute=0, second=0, microsecond=0)
     return {
         "task_id": f"DISRUPTION-{uuid.uuid4().hex[:6].upper()}",
         "segment_id": request.segment_id or "SEG-DISRUPTION",

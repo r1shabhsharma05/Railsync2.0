@@ -83,9 +83,9 @@ export default function BlockPlanner() {
   // Filter assignments by Department
   const filteredAssignments = assignments.filter((a) => {
     if (deptFilter === 'ALL') return true;
-    if (deptFilter === 'ENG') return a.department === 'Engineering' || a.department === 'TRACK';
-    if (deptFilter === 'TRD') return a.department === 'Electrical' || a.department === 'OHE';
-    if (deptFilter === 'S&T') return a.department === 'S&T' || a.department === 'SIGNAL';
+    if (deptFilter === 'TRACK') return a.department === 'TRACK';
+    if (deptFilter === 'OHE') return a.department === 'OHE';
+    if (deptFilter === 'SIG') return a.department === 'SIG';
     if (deptFilter === 'HIGH_PRIORITY') return (a.priority || 0) >= 0.005 || (a.priority || 0) >= 50;
     return true;
   });
@@ -491,9 +491,9 @@ export default function BlockPlanner() {
                 <div className="flex items-center gap-space-xs overflow-x-auto no-scrollbar py-0.5">
                   {[
                     { id: 'ALL', label: `ALL (${assignments.length})` },
-                    { id: 'ENG', label: 'ENG' },
-                    { id: 'TRD', label: 'ELEC' },
-                    { id: 'S&T', label: 'S&T' },
+                    { id: 'TRACK', label: 'TRACK' },
+                    { id: 'OHE', label: 'OHE' },
+                    { id: 'SIG', label: 'SIG' },
                     { id: 'HIGH_PRIORITY', label: 'HIGH RISK' },
                   ].map((f) => (
                     <button
@@ -610,13 +610,13 @@ export default function BlockPlanner() {
           <div className="flex items-center justify-between font-label-caps text-label-caps text-on-surface-variant mb-space-xs">
             <span>TIMETABLE SANCTIONING AUTHORITY: SR. DOM / PRYJ</span>
             <span className="font-code-sm text-code-sm text-primary font-bold">
-              {currentPlan?.plan_id || 'RAILGADI LIVE'}
+              {currentPlan?.plan_id || 'Published timetable'}
             </span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-space-xs text-center">
             <div className="bg-surface-container-lowest p-space-xs rounded border border-surface-container">
               <div className="font-label-caps text-label-caps text-secondary">DATA SOURCE</div>
-              <div className="font-code-md text-code-md font-bold text-primary">RAILGADI API</div>
+              <div className="font-code-md text-code-md font-bold text-primary">{(summary.fetched_from_api || 0) > 0 ? 'RAILGADI API' : 'IR PUBLISHED'}</div>
             </div>
             <div className="bg-surface-container-lowest p-space-xs rounded border border-surface-container">
               <div className="font-label-caps text-label-caps text-secondary">TRAINS TRACKED</div>

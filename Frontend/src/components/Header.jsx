@@ -9,6 +9,13 @@ export default function Header() {
   const [time, setTime] = useState('14:28:12 IST');
   const [activeConflicts, setActiveConflicts] = useState(0);
 
+  // Shift follows the clock (06:00–18:00 DAY, otherwise NIGHT) — the
+  // component re-renders every second on the clock tick, so this stays live.
+  const shiftHour = new Date().getHours();
+  const isDayShift = shiftHour >= 6 && shiftHour < 18;
+  const shiftLabel = isDayShift ? 'DAY SHIFT (06:00 - 18:00 IST)' : 'NIGHT SHIFT (18:00 - 06:00 IST)';
+  const shiftShort = isDayShift ? 'DAY SHIFT 06:00-18:00' : 'NIGHT SHIFT 18:00-06:00';
+
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -53,14 +60,14 @@ export default function Header() {
             {/* Route selector dropdown */}
             <button className="flex items-center gap-1.5 font-code-sm text-[12px] text-on-surface bg-surface-container px-2.5 py-1 rounded hover:bg-surface-container-high transition-colors max-w-[260px] truncate text-left font-medium">
               <span className="material-symbols-outlined text-[15px] text-primary shrink-0">train</span>
-              <span className="truncate">NCR / PRYJ Div (NDLS-DDU Km 1024-1148)</span>
+              <span className="truncate">NDLS–DDU • Km 0–788</span>
               <span className="material-symbols-outlined text-[15px] text-secondary shrink-0">arrow_drop_down</span>
             </button>
 
             {/* Shift & Desk details */}
             <div className="hidden md:flex items-center gap-2 text-[12px] font-code-sm text-secondary">
               <span className="w-2 h-2 rounded-full bg-on-tertiary-container animate-pulse"></span>
-              <span className="font-semibold text-on-surface">DAY SHIFT (06:00 - 18:00 IST)</span>
+              <span className="font-semibold text-on-surface">{shiftLabel}</span>
               <span>•</span>
               <span>SR. DOM / COA DESK</span>
             </div>
@@ -154,7 +161,7 @@ export default function Header() {
                 <div className="flex items-center gap-space-xs min-w-0">
                   <span className="material-symbols-outlined text-[16px] text-on-primary-container shrink-0">route</span>
                   <button className="flex items-center gap-space-xs font-code-sm text-code-sm text-on-primary bg-primary/40 px-space-xs py-0.5 rounded max-w-[200px] truncate text-left">
-                    <span className="truncate">NDLS-DDU (Km 1024-1148)</span>
+                    <span className="truncate">NDLS–DDU • Km 0–788</span>
                     <span className="material-symbols-outlined text-[14px]">arrow_drop_down</span>
                   </button>
                 </div>
@@ -185,7 +192,7 @@ export default function Header() {
               </div>
               <div className="flex items-center gap-space-sm">
                 <span className="font-label-caps text-label-caps bg-tertiary-fixed text-on-tertiary-fixed px-1.5 py-0.5 rounded font-bold uppercase">
-                  DAY SHIFT 06:00-18:00
+                  {shiftShort}
                 </span>
                 <span className="font-code-sm text-code-sm text-on-surface-variant">Sr. DOM / COA</span>
               </div>

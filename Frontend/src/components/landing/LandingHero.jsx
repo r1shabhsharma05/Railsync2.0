@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useScrollReveal } from './useScrollReveal';
 import { LigIcon } from './icons.jsx';
 import { ImageGallery } from './sphere/ImageGallery.jsx';
+import { useLiveRiskSegments, riskTier, tierIcon, riskLine, segmentDetail } from './useLiveRiskSegments';
 
 /**
  * Hero — Adomate's hero shape, RailSync's content and sphere.
@@ -11,20 +12,49 @@ import { ImageGallery } from './sphere/ImageGallery.jsx';
  * with light cards, concentric arc rings behind it. Drag to orbit, scroll
  * to roll, arrow keys work too, morphs into a helix. Click a card and the
  * panel under the sphere says what it is.
+ *
+ * The three risk cards on the sphere are the live top-3 segments from
+ * /risk/segments — their ids, risks and details come from the API, never
+ * from this file. The other nine cards are the product story, not data.
  */
 
 const TRACK_PHOTO = '/images/close-up-of-railway-track.jpg';
 
-const SPHERE_ITEMS = [
-  { id: 'seg-a', icon: 'verified_user', title: 'Segment A', line: 'Risk 0.15 · Low',
-    detail: 'Segment A — Kanpur–Etawah. Risk 0.15, low. No block needed this week; the model keeps watching it.',
-    announce: 'Segment A, low risk.' },
-  { id: 'seg-b', icon: 'warning', title: 'Segment B', line: 'Risk 0.72 · High',
-    detail: 'Segment B — Etawah–Tundla. Risk 0.72, high. A 6-hour block is already proposed for Thursday.',
-    announce: 'Segment B, high risk.' },
-  { id: 'seg-c', icon: 'check_circle', title: 'Segment C', line: 'Risk 0.28 · Watch',
-    detail: 'Segment C — Tundla–Aligarh. Risk 0.28, watch. One inspection task queued, no block yet.',
-    announce: 'Segment C, watch.' },
+// One segment card per live segment: id, risk and detail all from the API.
+function liveSegmentCard(seg) {
+  const risk = seg.risk_30d ?? 0;
+  return {
+    id: seg.segment_id,
+    icon: tierIcon(risk),
+    title: seg.segment_id,
+    line: riskLine(seg),
+    detail: segmentDetail(seg),
+    announce: `${seg.segment_id}, ${riskTier(risk).toLowerCase()} risk.`,
+  };
+}
+
+// While the live risks load, the sphere keeps its shape with placeholder
+// cards that say so — never a made-up risk.
+const LOADING_CARDS = [1, 2, 3].map((n) => ({
+  id: `seg-loading-${n}`,
+  icon: 'autorenew',
+  title: 'Loading…',
+  line: 'Live risk loading…',
+  detail: 'Loading live segment risk from the dashboard API…',
+  announce: 'Loading live segment risk.',
+}));
+
+// If the API is unreachable, the sphere says so instead of showing stale risks.
+const ERROR_CARDS = [1, 2, 3].map((n) => ({
+  id: `seg-unavailable-${n}`,
+  icon: 'warning',
+  title: 'Risk unavailable',
+  line: 'Live data failed to load',
+  detail: 'Live segment risk could not be loaded — see the dashboard for current values.',
+  announce: 'Live segment risk unavailable.',
+}));
+
+const FEATURE_CARDS = [
   { id: 'predict', icon: 'psychology', title: 'Predict', line: 'ML scores every segment',
     detail: 'Predict — the model scores every segment’s failure risk from track, weather and traffic history.',
     announce: 'Predict: the model scores every segment.' },
@@ -86,15 +116,39 @@ function useImageHeight() {
 export default function LandingHero() {
   const heroRef = useScrollReveal();
   const [mode, setMode] = useState('sphere');
-  const [selectedId, setSelectedId] = useState('seg-b');
+  const [selectedId, setSelectedId] = useState(null);
   const imageHeight = useImageHeight();
+  const { top3, loading, error } = useLiveRiskSegments();
 
-  const items = SPHERE_ITEMS.map((it) => ({
+  const segmentCards = error
+    ? ERROR_CARDS
+    : loading
+      ? LOADING_CARDS
+      : top3.map(liveSegmentCard);
+  const sphereItems = [...segmentCards, ...FEATURE_CARDS];
+
+  // Once the live risks arrive, select the highest-risk segment — unless
+  // the visitor already picked a card.
+  useEffect(() => {
+    if (
+      !loading &&
+      !error &&
+      top3.length > 0 &&
+      (selectedId === null ||
+        selectedId.startsWith('seg-loading') ||
+        selectedId.startsWith('seg-unavailable'))
+    ) {
+      setSelectedId(top3[0].segment_id);
+    }
+  }, [loading, error, top3, selectedId]);
+
+  const items = sphereItems.map((it) => ({
     id: it.id,
     node: sphereCard(it),
     announce: it.announce,
   }));
-  const selected = SPHERE_ITEMS.find((it) => it.id === selectedId) || SPHERE_ITEMS[1];
+  const selected =
+    sphereItems.find((it) => it.id === selectedId) || sphereItems[0];
 
   return (
     <section className="relative overflow-hidden" style={{ background: 'var(--bg)' }}>

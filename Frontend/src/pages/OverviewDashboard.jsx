@@ -90,11 +90,12 @@ export default function OverviewDashboard() {
       const segId = `SEG-${String(i).padStart(3, '0')}`;
       let segData = mapBySeg[segId];
 
-      // No API row for this segment: keep the slot, but do NOT invent risk data.
+      // No API row for this segment: keep the slot, but do NOT invent data —
+      // division and risk stay null and render as "—", never as 0.
       if (!segData) {
         segData = {
           segment_id: segId,
-          division: i <= 25 ? 'Delhi' : 'Agra',
+          division: null,
           asset_type: null,
           risk_30d: null,
           expected_downtime_days: null,
@@ -129,8 +130,8 @@ export default function OverviewDashboard() {
   const availableAssetsCount = Math.max(0, totalSegmentsCount - blockedAssetsCount);
   const availabilityPercent = ((availableAssetsCount / totalSegmentsCount) * 100).toFixed(1);
 
-  const delhiSegments = sortedCorridor.filter((s) => s.division.toLowerCase() === 'delhi');
-  const agraSegments = sortedCorridor.filter((s) => s.division.toLowerCase() === 'agra');
+  const delhiSegments = sortedCorridor.filter((s) => (s.division || '').toLowerCase() === 'delhi');
+  const agraSegments = sortedCorridor.filter((s) => (s.division || '').toLowerCase() === 'agra');
 
   const delhiCritical = delhiSegments.filter(isCriticalRisk);
 
@@ -139,162 +140,39 @@ export default function OverviewDashboard() {
   const allCritical = sortedCorridor.filter(isCriticalRisk);
 
   const [showConflictsModal, setShowConflictsModal] = useState(false);
-  const [activeIrCorridor, setActiveIrCorridor] = useState('DELHI_KANPUR');
+  const [activeIrCorridor, setActiveIrCorridor] = useState('NDLS_DDU');
 
-  // Indian Railways High-Density Trunk Corridors Registry
+  // NDLS–DDU is the only corridor the project data covers (50 segments,
+  // Delhi/Agra divisions). The other trunk corridors were never in scope.
   const irCorridors = {
-    DELHI_KANPUR: {
-      id: 'DELHI_KANPUR',
-      name: 'Delhi – Kanpur – Prayagraj Trunk (NCR / UP Quad)',
-      code: 'NCR-GQ-UP-01',
-      zone: 'NCR / NR',
-      total_km: 440,
+    NDLS_DDU: {
+      id: 'NDLS_DDU',
+      name: 'NDLS–DDU Corridor',
+      zone: 'NR / NCR / ECR',
+      total_km: 788,
       electrification: '25kV OHE Electrified • Auto-Block Signalling',
       sections: [
-        { name: 'SECTION 1: DLI–PWL', dist: 'SEG 01–12 • 60 KM', route: 'NDLS → TKD → FDB → PWL', tag: 'Northern Div', color: 'text-sky-600' },
-        { name: 'SECTION 2: PWL–MTJ', dist: 'SEG 13–25 • 81 KM', route: 'PWL → KSV → CHJ → MTJ', tag: 'High-Speed 160k', color: 'text-indigo-600' },
-        { name: 'SECTION 3: MTJ–AGC', dist: 'SEG 26–35 • 54 KM', route: 'MTJ → FAR → RKM → AGC', tag: 'Agra Taj Line', color: 'text-amber-600' },
-        { name: 'SECTION 4: AGC–TDL–CNB', dist: 'SEG 36–50 • 245 KM', route: 'AGC → TDL → ETW → CNB', tag: 'Kanpur DFC Trunk', color: 'text-emerald-600' },
+        { name: 'SECTION 1: NDLS–ALJN', dist: 'SEG 01–12 • 132 KM', route: 'NDLS → GZB → ALJN', tag: 'Delhi Suburban', color: 'text-sky-600' },
+        { name: 'SECTION 2: ALJN–CNB', dist: 'SEG 13–25 • 309 KM', route: 'ALJN → TDL → ETW → CNB', tag: 'Kanpur Trunk', color: 'text-indigo-600' },
+        { name: 'SECTION 3: CNB–PRYJ', dist: 'SEG 26–35 • 195 KM', route: 'CNB → FTP → BWR → PRYJ', tag: 'Prayagraj Trunk', color: 'text-amber-600' },
+        { name: 'SECTION 4: PRYJ–DDU', dist: 'SEG 36–50 • 152 KM', route: 'PRYJ → MZP → DDU', tag: 'DDU Approach', color: 'text-emerald-600' },
       ],
       gantries: [
-        { name: 'NDLS (0k)', title: 'Section 1: Delhi Suburban', color: 'text-sky-400' },
-        { name: 'TKD (18k)', title: 'Section 1: Tuglakabad Yard', color: 'text-sky-400' },
-        { name: 'PWL (60k)', title: 'Section 1: Palwal Jcn', color: 'text-sky-400' },
-        { name: 'KSV (100k)', title: 'Section 2: Kosi Kalan', color: 'text-indigo-300' },
-        { name: 'MTJ (141k)', title: 'Section 2: Mathura Jcn', color: 'text-indigo-300' },
-        { name: 'FAR (162k)', title: 'Section 3: Farah', color: 'text-amber-400' },
-        { name: 'AGC (195k)', title: 'Section 3: Agra Cantt', color: 'text-amber-400' },
-        { name: 'TDL (248k)', title: 'Section 4: Tundla Jcn', color: 'text-emerald-400' },
-        { name: 'ETW (336k)', title: 'Section 4: Etawah Jcn', color: 'text-emerald-400' },
-        { name: 'CNB (440k)', title: 'Section 4: Kanpur Central', color: 'text-emerald-400' },
-      ],
-    },
-    DELHI_MUMBAI: {
-      id: 'DELHI_MUMBAI',
-      name: 'Delhi – Kota – Vadodara – Mumbai Central (WR Western Trunk)',
-      code: 'WR-GQ-WEST-02',
-      zone: 'WR / WCR / NR',
-      total_km: 1386,
-      electrification: '25kV OHE High-Rise Catenary • 160 km/h WCTG',
-      sections: [
-        { name: 'SECTION 1: NDLS–KOTA', dist: 'SEG 01–12 • 465 KM', route: 'NDLS → MTJ → SWM → KOTA', tag: 'Kota Division', color: 'text-sky-600' },
-        { name: 'SECTION 2: KOTA–RTM', dist: 'SEG 13–25 • 265 KM', route: 'KOTA → BWM → RTM → DHD', tag: 'Ratlam Division', color: 'text-indigo-600' },
-        { name: 'SECTION 3: RTM–BRC', dist: 'SEG 26–35 • 260 KM', route: 'RTM → GDA → BRC → ANND', tag: 'Vadodara Div', color: 'text-amber-600' },
-        { name: 'SECTION 4: BRC–MMCT', dist: 'SEG 36–50 • 396 KM', route: 'BRC → ST → VAPI → BVI → MMCT', tag: 'Mumbai Suburban', color: 'text-emerald-600' },
-      ],
-      gantries: [
-        { name: 'NDLS (0k)', title: 'Delhi Terminal', color: 'text-sky-400' },
-        { name: 'MTJ (141k)', title: 'Mathura Junction', color: 'text-sky-400' },
-        { name: 'KOTA (465k)', title: 'Kota Junction', color: 'text-indigo-300' },
-        { name: 'RTM (730k)', title: 'Ratlam Junction', color: 'text-indigo-300' },
-        { name: 'BRC (990k)', title: 'Vadodara Junction', color: 'text-amber-400' },
-        { name: 'ST (1120k)', title: 'Surat Central', color: 'text-amber-400' },
-        { name: 'VAPI (1215k)', title: 'Vapi Industrial Yard', color: 'text-emerald-400' },
-        { name: 'BVI (1355k)', title: 'Borivali Suburban', color: 'text-emerald-400' },
-        { name: 'MMCT (1386k)', title: 'Mumbai Central Terminus', color: 'text-emerald-400' },
-      ],
-    },
-    HOWRAH_DELHI: {
-      id: 'HOWRAH_DELHI',
-      name: 'Howrah – Dhanbad – DDU – Prayagraj Grand Chord (ECR/ER/NCR)',
-      code: 'ECR-GC-EAST-03',
-      zone: 'ECR / ER / NCR',
-      total_km: 1447,
-      electrification: '25kV 2x50kV Heavy Haul • Auto-Cab Signalling',
-      sections: [
-        { name: 'SECTION 1: HWH–ASN', dist: 'SEG 01–12 • 200 KM', route: 'HWH → BWN → DGR → ASN', tag: 'Eastern Coalfield', color: 'text-sky-600' },
-        { name: 'SECTION 2: ASN–DHN', dist: 'SEG 13–25 • 468 KM', route: 'ASN → DHN → GAYA → DDU', tag: 'Grand Chord HDN', color: 'text-indigo-600' },
-        { name: 'SECTION 3: DDU–PRYJ', dist: 'SEG 26–35 • 352 KM', route: 'DDU → MZP → PRYJ → CNB', tag: 'Prayagraj Division', color: 'text-amber-600' },
-        { name: 'SECTION 4: CNB–NDLS', dist: 'SEG 36–50 • 427 KM', route: 'CNB → ETW → TDL → NDLS', tag: 'Delhi Express Line', color: 'text-emerald-600' },
-      ],
-      gantries: [
-        { name: 'HWH (0k)', title: 'Howrah Terminus', color: 'text-sky-400' },
-        { name: 'BWN (95k)', title: 'Bardhaman Junction', color: 'text-sky-400' },
-        { name: 'ASN (200k)', title: 'Asansol Junction', color: 'text-indigo-300' },
-        { name: 'DHN (259k)', title: 'Dhanbad Coal Belt', color: 'text-indigo-300' },
-        { name: 'DDU (668k)', title: 'Pt. Deen Dayal Upadhyaya', color: 'text-amber-400' },
-        { name: 'PRYJ (820k)', title: 'Prayagraj Junction', color: 'text-amber-400' },
-        { name: 'CNB (1020k)', title: 'Kanpur Central', color: 'text-emerald-400' },
-        { name: 'NDLS (1447k)', title: 'New Delhi Terminus', color: 'text-emerald-400' },
-      ],
-    },
-    MUMBAI_CHENNAI: {
-      id: 'MUMBAI_CHENNAI',
-      name: 'Mumbai – Pune – Solapur – Guntakal – Chennai (CR/SCR/SR)',
-      code: 'CR-GQ-SOUTH-04',
-      zone: 'CR / SCR / SR',
-      total_km: 1280,
-      electrification: '25kV OHE AC • Bhor Ghat Double Traction',
-      sections: [
-        { name: 'SECTION 1: CSMT–PUNE', dist: 'SEG 01–12 • 192 KM', route: 'CSMT → KYN → LNL → PUNE', tag: 'Bhor Ghat Section', color: 'text-sky-600' },
-        { name: 'SECTION 2: PUNE–SUR', dist: 'SEG 13–25 • 408 KM', route: 'PUNE → DD → SUR → WADI', tag: 'Solapur Division', color: 'text-indigo-600' },
-        { name: 'SECTION 3: WADI–GTL', dist: 'SEG 26–35 • 320 KM', route: 'WADI → RC → GTL → RU', tag: 'Guntakal Division', color: 'text-amber-600' },
-        { name: 'SECTION 4: RU–MAS', dist: 'SEG 36–50 • 360 KM', route: 'RU → AJJ → PER → MAS', tag: 'Chennai Suburban', color: 'text-emerald-600' },
-      ],
-      gantries: [
-        { name: 'CSMT (0k)', title: 'Mumbai CSMT', color: 'text-sky-400' },
-        { name: 'KYN (54k)', title: 'Kalyan Junction', color: 'text-sky-400' },
-        { name: 'PUNE (192k)', title: 'Pune Junction', color: 'text-indigo-300' },
-        { name: 'SUR (455k)', title: 'Solapur Junction', color: 'text-indigo-300' },
-        { name: 'WADI (600k)', title: 'Wadi Junction', color: 'text-amber-400' },
-        { name: 'GTL (820k)', title: 'Guntakal Junction', color: 'text-amber-400' },
-        { name: 'RU (950k)', title: 'Renigunta Junction', color: 'text-emerald-400' },
-        { name: 'MAS (1280k)', title: 'Chennai Central Terminus', color: 'text-emerald-400' },
-      ],
-    },
-    DELHI_JAMMU: {
-      id: 'DELHI_JAMMU',
-      name: 'Delhi – Ambala – Ludhiana – Jammu Tawi (NR Northern High-Speed)',
-      code: 'NR-HDN-NORTH-05',
-      zone: 'NR / FZR',
-      total_km: 580,
-      electrification: '25kV OHE High-Speed • Automatic Block Signaling',
-      sections: [
-        { name: 'SECTION 1: NDLS–UMB', dist: 'SEG 01–12 • 198 KM', route: 'NDLS → SNP → PNP → UMB', tag: 'Ambala Division', color: 'text-sky-600' },
-        { name: 'SECTION 2: UMB–LDH', dist: 'SEG 13–25 • 167 KM', route: 'UMB → RPJ → LDH → JRC', tag: 'Ludhiana Trunk', color: 'text-indigo-600' },
-        { name: 'SECTION 3: JRC–PTKC', dist: 'SEG 26–35 • 113 KM', route: 'JRC → DAS → PTKC → KTH', tag: 'Pathankot Section', color: 'text-amber-600' },
-        { name: 'SECTION 4: PTKC–JAT', dist: 'SEG 36–50 • 102 KM', route: 'PTKC → KTH → UHP → JAT', tag: 'Jammu Foothills', color: 'text-emerald-600' },
-      ],
-      gantries: [
-        { name: 'NDLS (0k)', title: 'New Delhi Terminus', color: 'text-sky-400' },
-        { name: 'PNP (89k)', title: 'Panipat Junction', color: 'text-sky-400' },
-        { name: 'UMB (198k)', title: 'Ambala Cantt', color: 'text-indigo-300' },
-        { name: 'LDH (312k)', title: 'Ludhiana Junction', color: 'text-indigo-300' },
-        { name: 'JRC (365k)', title: 'Jalandhar City', color: 'text-amber-400' },
-        { name: 'PTKC (478k)', title: 'Pathankot Cantt', color: 'text-amber-400' },
-        { name: 'JAT (580k)', title: 'Jammu Tawi Terminus', color: 'text-emerald-400' },
-      ],
-    },
-    HOWRAH_CHENNAI: {
-      id: 'HOWRAH_CHENNAI',
-      name: 'Howrah – Visakhapatnam – Vijayawada – Chennai (SER/ECoR/SCR)',
-      code: 'SER-GQ-EASTCOAST-06',
-      zone: 'SER / ECoR / SCR / SR',
-      total_km: 1661,
-      electrification: '25kV AC Heavy Coastal Line • Automatic Train Protection',
-      sections: [
-        { name: 'SECTION 1: HWH–KGP', dist: 'SEG 01–12 • 320 KM', route: 'HWH → KGP → BLS → CTC', tag: 'Kharagpur Division', color: 'text-sky-600' },
-        { name: 'SECTION 2: CTC–VSKP', dist: 'SEG 13–25 • 558 KM', route: 'CTC → BBS → BAM → VSKP', tag: 'East Coast Railway', color: 'text-indigo-600' },
-        { name: 'SECTION 3: VSKP–BZA', dist: 'SEG 26–35 • 350 KM', route: 'VSKP → RJY → BZA → OGLE', tag: 'Vijayawada Division', color: 'text-amber-600' },
-        { name: 'SECTION 4: BZA–MAS', dist: 'SEG 36–50 • 433 KM', route: 'BZA → NLR → GDR → MAS', tag: 'South Coast Corridor', color: 'text-emerald-600' },
-      ],
-      gantries: [
-        { name: 'HWH (0k)', title: 'Howrah Terminus', color: 'text-sky-400' },
-        { name: 'KGP (115k)', title: 'Kharagpur Junction', color: 'text-sky-400' },
-        { name: 'BBS (435k)', title: 'Bhubaneswar Capital', color: 'text-indigo-300' },
-        { name: 'VSKP (878k)', title: 'Visakhapatnam Junction', color: 'text-indigo-300' },
-        { name: 'BZA (1228k)', title: 'Vijayawada Junction', color: 'text-amber-400' },
-        { name: 'MAS (1661k)', title: 'Chennai Central Terminus', color: 'text-emerald-400' },
+        { name: 'NDLS (0k)', title: 'Section 1: New Delhi', color: 'text-sky-400' },
+        { name: 'ALJN (132k)', title: 'Section 1: Aligarh Jn', color: 'text-sky-400' },
+        { name: 'CNB (441k)', title: 'Section 2: Kanpur Central', color: 'text-indigo-300' },
+        { name: 'PRYJ (636k)', title: 'Section 3: Prayagraj Jn', color: 'text-amber-400' },
+        { name: 'DDU (788k)', title: 'Section 4: Pt. Deen Dayal Upadhyaya', color: 'text-emerald-400' },
       ],
     },
   };
 
-  const currentIrCorridor = irCorridors[activeIrCorridor] || irCorridors.DELHI_KANPUR;
+  const currentIrCorridor = irCorridors[activeIrCorridor] || irCorridors.NDLS_DDU;
 
-  // Department counts in current plan
-  const engCount = assignments.filter((a) => a.department === 'Engineering' || a.department === 'TRACK').length;
-  const oheCount = assignments.filter((a) => a.department === 'Electrical' || a.department === 'OHE').length;
-  const sntCount = assignments.filter((a) => a.department === 'S&T' || a.department === 'SIG' || a.department === 'SIGNAL').length;
+  // Department counts in current plan — the real codes from the payload.
+  const trackCount = assignments.filter((a) => a.department === 'TRACK').length;
+  const oheCount = assignments.filter((a) => a.department === 'OHE').length;
+  const sigCount = assignments.filter((a) => a.department === 'SIG').length;
 
   const filteredAssignments = assignments;
 
@@ -372,7 +250,7 @@ export default function OverviewDashboard() {
                 <span className="font-code-sm text-code-sm text-on-tertiary-container font-semibold">APPROVED</span>
               </div>
               <div className="flex items-center gap-space-xs font-code-sm text-code-sm text-on-surface-variant">
-                <span>{loading ? '—' : engCount} ENG</span>•<span>{loading ? '—' : oheCount} ELEC</span>•<span>{loading ? '—' : sntCount} S&amp;T</span>
+                <span>{loading ? '—' : trackCount} TRACK</span>•<span>{loading ? '—' : oheCount} OHE</span>•<span>{loading ? '—' : sigCount} SIG</span>
               </div>
             </div>
 
@@ -464,6 +342,11 @@ export default function OverviewDashboard() {
           </div>
 
           {/* Virtual Railway Corridor Schematic Ribbon */}
+          {loading ? (
+            <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm text-center text-on-surface-variant font-code-sm">
+              Loading corridor segments…
+            </div>
+          ) : (
           <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col gap-space-sm border border-surface-container-high">
             {/* Header and Corridor Switcher */}
             <div className="flex items-center justify-between flex-wrap gap-space-xs">
@@ -581,7 +464,7 @@ export default function OverviewDashboard() {
                             ? 'caution-stripes-amber'
                             : 'bg-emerald-950/40 hover:bg-emerald-900/60'
                         }`}
-                        title={`🛤️ TRACK BLOCK: ${seg.segment_id} (${seg.division} Div)\n• Status: ${isDefect ? `⛔ DEFECT/MAINTENANCE BLOCK [Cause: ${causeWord}]` : isCaution ? '🟡 PSR / CAUTION (30 km/h)' : '🟢 CLEAR TRACK (110 km/h)'}\n• Failure Risk: ${((seg.risk_30d || 0) * 100).toFixed(1)}%\n• Asset: ${seg.asset_type || causeWord}`}
+                        title={`🛤️ TRACK BLOCK: ${seg.segment_id} (${seg.division ? `${seg.division} Div` : '—'})\n• Status: ${isDefect ? `⛔ DEFECT/MAINTENANCE BLOCK [Cause: ${causeWord}]` : isCaution ? '🟡 PSR / CAUTION (30 km/h)' : '🟢 CLEAR TRACK (110 km/h)'}\n• Failure Risk: ${seg.risk_30d == null ? '—' : `${(seg.risk_30d * 100).toFixed(1)}%`}\n• Asset: ${seg.asset_type || causeWord}`}
                       >
                         {/* Block Signal Post Lamp (Top) */}
                         <div className="flex justify-center pt-0.5">
@@ -674,7 +557,7 @@ export default function OverviewDashboard() {
                               : 'text-emerald-600'
                           }`}
                         >
-                          {seg.division} Div • {((seg.risk_30d || 0) * 100).toFixed(1)}%
+                          {seg.division || '—'} Div • {seg.risk_30d == null ? '—' : `${(seg.risk_30d * 100).toFixed(1)}%`}
                         </span>
                         <span className="font-body-sm text-body-sm text-on-surface-variant truncate font-medium">
                           {isCrit ? `BLOCK (${causeWord})` : isMed ? 'CAUTION (30km/h)' : 'On-Time Response'}
@@ -701,11 +584,11 @@ export default function OverviewDashboard() {
                       const cause = getOneWordCause(inspected);
                       return (
                         <div className="flex items-center gap-space-sm text-body-sm font-code-sm text-on-surface-variant mt-0.5 flex-wrap">
-                          <span>Division: {inspected.division}</span>
+                          <span>Division: {inspected.division || '—'}</span>
                           <span>•</span>
                           <span>Asset: {inspected.asset_type || cause}</span>
                           <span>•</span>
-                          <span>Failure Risk: <strong className={isCriticalRisk(inspected) ? 'text-error' : 'text-emerald-600'}>{((inspected.risk_30d || 0) * 100).toFixed(1)}%</strong></span>
+                          <span>Failure Risk: <strong className={isCriticalRisk(inspected) ? 'text-error' : 'text-emerald-600'}>{inspected.risk_30d == null ? '—' : `${(inspected.risk_30d * 100).toFixed(1)}%`}</strong></span>
                           <span>•</span>
                           <span>Block Duration: {inspected.preventive_block_duration_hrs ? `${inspected.preventive_block_duration_hrs}h` : '—'}</span>
                         </div>
@@ -802,18 +685,14 @@ export default function OverviewDashboard() {
                       ></span>
                     </div>
                     <span className="font-label-caps text-label-caps text-on-surface-variant font-semibold">
-                      {seg.division} • {seg.asset_type || causeWord}
+                      {seg.division || '—'} • {seg.asset_type || causeWord}
                     </span>
                     <div className="flex items-center justify-between text-body-sm font-code-sm mt-1">
                       <span className={isHigh ? 'text-error font-bold' : isMed ? 'text-amber-500 font-bold' : 'text-emerald-600 font-semibold'}>
                         {isHigh ? `BLOCK (${causeWord})` : isMed ? 'CAUTION' : 'On-Time Response'}
                       </span>
                       <span className="text-on-surface-variant text-[11px] font-medium">
-                        {(() => {
-                          const base = (seg.asset_type || '').toUpperCase().includes('OHE') ? 2.5 : (seg.asset_type || '').toUpperCase().includes('S&T') ? 1.5 : 3.5;
-                          const d = (base + ((seg.length_km || 12.0) / 25.0) * 0.5 + ((seg.age_years || 20.0) / 40.0) * 0.5).toFixed(1);
-                          return `${d}h`;
-                        })()}
+                        {seg.preventive_block_duration_hrs ? `${seg.preventive_block_duration_hrs}h` : '—'}
                       </span>
                     </div>
                   </div>
@@ -821,6 +700,7 @@ export default function OverviewDashboard() {
               })}
             </div>
           </div>
+          )}
 
           {/* High-Priority Segment Alerts (AI Survival Intelligence) */}
           <div id="high-priority-alerts" className="flex flex-col gap-space-xs">
@@ -833,7 +713,7 @@ export default function OverviewDashboard() {
               </div>
               <div className="flex items-center gap-1.5 font-label-caps text-label-caps uppercase font-bold tracking-wider">
                 <span className="bg-error text-on-error px-2 py-0.5 rounded shadow-xs">
-                  {allCritical.length} CRITICAL
+                  {loading ? '—' : allCritical.length} CRITICAL
                 </span>
               </div>
             </div>

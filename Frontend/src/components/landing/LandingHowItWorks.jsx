@@ -1,82 +1,100 @@
 import React from 'react';
 import { useScrollReveal } from './useScrollReveal';
 import { LigIcon } from './icons.jsx';
+import { useLiveRiskSegments } from './useLiveRiskSegments';
 
 /* One block request, further along in every field.
    Fields run light → dark navy → accent, so the plan's progress reads as
-   the page deepening toward the replan. */
-const STAGES = [
-  {
-    stage: 'Predict',
-    icon: 'psychology',
-    clause: 'First the risk is scored.',
-    detail: 'The ML model scores failure risk for every segment.',
-    rows: [
-      { label: 'Request', value: 'Track tamping' },
-      { label: 'Segment', value: 'B · Civil' },
-    ],
-    field: 'bg-[var(--raised)] text-[var(--ink)]',
-    clauseColor: 'text-[var(--ink)]',
-  },
-  {
-    stage: 'Detect',
-    icon: 'radar',
-    clause: 'Then conflicts are flagged.',
-    detail: 'Windows are checked against timetabled train paths.',
-    rows: [
-      { label: 'Request', value: 'Track tamping' },
-      { label: 'Segment', value: 'B · Civil' },
-      { label: 'Risk', value: '0.72 — maintenance due' },
-    ],
-    field: 'bg-white text-[var(--ink)]',
-    clauseColor: 'text-[var(--ink)]',
-  },
-  {
-    stage: 'Optimise',
-    icon: 'memory',
-    clause: 'Then a window is found.',
-    detail: 'CP-SAT finds a feasible schedule under hard constraints.',
-    rows: [
-      { label: 'Request', value: 'Track tamping' },
-      { label: 'Segment', value: 'B · Civil' },
-      { label: 'Risk', value: '0.72 — maintenance due' },
-      { label: 'Conflicts', value: '2 flagged' },
-    ],
-    field: 'bg-[#24365e] text-[#e8ecf5]',
-    clauseColor: 'text-[#e8ecf5]',
-  },
-  {
-    stage: 'Explain',
-    icon: 'assignment',
-    clause: 'Then it is explained.',
-    detail: 'Every decision carries a plain-language reason.',
-    rows: [
-      { label: 'Request', value: 'Track tamping' },
-      { label: 'Segment', value: 'B · Civil' },
-      { label: 'Risk', value: '0.72 — maintenance due' },
-      { label: 'Conflicts', value: '2 flagged' },
-      { label: 'Window', value: 'Block B-12 · 02:00–04:30' },
-    ],
-    field: 'bg-[#1f2b4d] text-[#e8ecf5]',
-    clauseColor: 'text-[#e8ecf5]',
-  },
-  {
-    stage: 'Replan',
-    icon: 'autorenew',
-    clause: 'Then the plan changes.',
-    detail: 'A disruption re-runs the solver before you commit.',
-    rows: [
-      { label: 'Request', value: 'Track tamping' },
-      { label: 'Segment', value: 'B · Civil' },
-      { label: 'Risk', value: '0.72 — maintenance due' },
-      { label: 'Conflicts', value: '2 flagged' },
-      { label: 'Window', value: 'Block B-12 · 02:00–04:30' },
-      { label: 'Reason', value: 'Headway kept, crew free' },
-    ],
-    field: 'bg-[var(--accent)] text-[var(--accent-ink)]',
-    clauseColor: 'text-[var(--accent-ink)]',
-  },
-];
+   the page deepening toward the replan. The card is a worked example:
+   its segment, risk and window are the live top segment's, while the
+   conflict count and the reason are the example's own story. */
+function buildStages(top1, loading, error) {
+  // Live values for the example card — 'Loading…' / 'Unavailable' while
+  // the live risks arrive or fail, never a made-up risk.
+  const value = (format) =>
+    top1 ? format(top1) : error ? 'Unavailable' : 'Loading…';
+  const segment = value((s) => `${s.segment_id} · TRACK`);
+  const risk = value(
+    (s) => `${(s.risk_30d ?? 0).toFixed(2)} — maintenance due`,
+  );
+  const window = value((s) =>
+    s.preventive_block_duration_hrs != null
+      ? `${s.preventive_block_duration_hrs}h block`
+      : '—',
+  );
+  return [
+    {
+      stage: 'Predict',
+      icon: 'psychology',
+      clause: 'First the risk is scored.',
+      detail: 'The ML model scores failure risk for every segment.',
+      rows: [
+        { label: 'Request', value: 'Track tamping' },
+        { label: 'Segment', value: segment },
+      ],
+      field: 'bg-[var(--raised)] text-[var(--ink)]',
+      clauseColor: 'text-[var(--ink)]',
+    },
+    {
+      stage: 'Detect',
+      icon: 'radar',
+      clause: 'Then conflicts are flagged.',
+      detail: 'Windows are checked against timetabled train paths.',
+      rows: [
+        { label: 'Request', value: 'Track tamping' },
+        { label: 'Segment', value: segment },
+        { label: 'Risk', value: risk },
+      ],
+      field: 'bg-white text-[var(--ink)]',
+      clauseColor: 'text-[var(--ink)]',
+    },
+    {
+      stage: 'Optimise',
+      icon: 'memory',
+      clause: 'Then a window is found.',
+      detail: 'CP-SAT finds a feasible schedule under hard constraints.',
+      rows: [
+        { label: 'Request', value: 'Track tamping' },
+        { label: 'Segment', value: segment },
+        { label: 'Risk', value: risk },
+        { label: 'Conflicts', value: '2 flagged' },
+      ],
+      field: 'bg-[#24365e] text-[#e8ecf5]',
+      clauseColor: 'text-[#e8ecf5]',
+    },
+    {
+      stage: 'Explain',
+      icon: 'assignment',
+      clause: 'Then it is explained.',
+      detail: 'Every decision carries a plain-language reason.',
+      rows: [
+        { label: 'Request', value: 'Track tamping' },
+        { label: 'Segment', value: segment },
+        { label: 'Risk', value: risk },
+        { label: 'Conflicts', value: '2 flagged' },
+        { label: 'Window', value: window },
+      ],
+      field: 'bg-[#1f2b4d] text-[#e8ecf5]',
+      clauseColor: 'text-[#e8ecf5]',
+    },
+    {
+      stage: 'Replan',
+      icon: 'autorenew',
+      clause: 'Then the plan changes.',
+      detail: 'A disruption re-runs the solver before you commit.',
+      rows: [
+        { label: 'Request', value: 'Track tamping' },
+        { label: 'Segment', value: segment },
+        { label: 'Risk', value: risk },
+        { label: 'Conflicts', value: '2 flagged' },
+        { label: 'Window', value: window },
+        { label: 'Reason', value: 'Headway kept, crew free' },
+      ],
+      field: 'bg-[var(--accent)] text-[var(--accent-ink)]',
+      clauseColor: 'text-[var(--accent-ink)]',
+    },
+  ];
+}
 
 /**
  * How it works — One card, four fields, adapted to five (the pipeline has
@@ -86,20 +104,27 @@ const STAGES = [
  */
 export default function LandingHowItWorks() {
   const sectionRef = useScrollReveal();
+  const { top1, loading, error } = useLiveRiskSegments();
+  const stages = buildStages(top1, loading, error);
 
   return (
     <section id="pipeline" className="bg-[var(--bg)]">
       <div ref={sectionRef} className="rs-reveal flex flex-col md:flex-row w-full">
-        {STAGES.map((s, idx) => (
+        {stages.map((s, idx) => (
           <div
             key={s.stage}
             className={`relative ${s.field} w-full md:w-[20vw] h-[64svh] md:h-[84svh] shrink-0`}
           >
             {/* Heading, first field only */}
             {idx === 0 && (
-              <h2 className="font-display text-[24px] md:text-[clamp(22px,2vw,32px)] leading-[1.1] px-5 md:px-7 pt-6 md:pt-7">
-                From prediction to action
-              </h2>
+              <>
+                <h2 className="font-display text-[24px] md:text-[clamp(22px,2vw,32px)] leading-[1.1] px-5 md:px-7 pt-6 md:pt-7">
+                  From prediction to action
+                </h2>
+                <p className="text-[13px] leading-[1.5] text-[var(--muted)] px-5 md:px-7 pt-2">
+                  Worked example — one request, live risk.
+                </p>
+              </>
             )}
 
             {/* Clause */}

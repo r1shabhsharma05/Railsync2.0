@@ -73,7 +73,7 @@ def generate_timetable(
 ) -> list[dict[str, Any]]:
     """Generate timetable block-unavailability windows based on real published train schedules."""
     if base_date is None:
-        base_date = datetime(2026, 9, 15, 0, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     if not use_real_fixture:
         # Fallback synthetic generator for testing custom counts
@@ -129,7 +129,7 @@ def generate_goods_forecast(
     """Generate goods train frequency forecast shaped by real passenger track traffic."""
     rng = random.Random(seed + 100)
     if base_date is None:
-        base_date = datetime(2026, 9, 15, 0, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     if timetable is None:
         timetable = generate_timetable(seed=seed, base_date=base_date, days=days, use_real_fixture=True)
@@ -178,7 +178,7 @@ def generate_maintenance_tasks(
     """Generate maintenance task backlog for given segments."""
     rng = random.Random(seed + 200)
     if base_date is None:
-        base_date = datetime(2026, 9, 15, 6, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     tasks = []
     task_idx = 1

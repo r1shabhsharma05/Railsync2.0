@@ -4,7 +4,7 @@ import { api } from '../services/api';
 
 export default function DigitalTwin() {
   const [twinMode, setTwinMode] = useState('realtime');
-  const [activeLayers, setActiveLayers] = useState(['P-Way Track', 'OHE Traction', 'S&T Signalling']);
+  const [activeLayers, setActiveLayers] = useState(['TRACK', 'OHE', 'SIG']);
   const [segments, setSegments] = useState([]);
   const [currentPlan, setCurrentPlan] = useState(null);
   const [selectedSegment, setSelectedSegment] = useState(null);
@@ -109,7 +109,7 @@ export default function DigitalTwin() {
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase mr-1">
               Active Layers:
             </span>
-            {['P-Way Track', 'OHE Traction', 'S&T Signalling'].map((layer) => {
+            {['TRACK', 'OHE', 'SIG'].map((layer) => {
               const active = activeLayers.includes(layer);
               return (
                 <button

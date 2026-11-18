@@ -44,15 +44,15 @@ export default function TaskPool() {
   const totalTasks = tasks.length;
   const criticalTasks = tasks.filter((t) => t.claimed_criticality >= 4);
   const overdueTasks = tasks.filter((t) => t.overdue);
-  const engTasks = tasks.filter((t) => t.department === 'Engineering' || t.department === 'TRACK');
-  const sntTasks = tasks.filter((t) => t.department === 'S&T' || t.department === 'SIG' || t.department === 'SIGNAL');
-  const elecTasks = tasks.filter((t) => t.department === 'Electrical' || t.department === 'OHE');
+  const trackTasks = tasks.filter((t) => t.department === 'TRACK');
+  const oheTasks = tasks.filter((t) => t.department === 'OHE');
+  const sigTasks = tasks.filter((t) => t.department === 'SIG');
 
   // Filtering
   const filteredTasks = tasks.filter((t) => {
-    if (filterDept === 'Engineering' && t.department !== 'Engineering' && t.department !== 'TRACK') return false;
-    if (filterDept === 'S&T' && t.department !== 'S&T' && t.department !== 'SIG' && t.department !== 'SIGNAL') return false;
-    if (filterDept === 'Electrical' && t.department !== 'Electrical' && t.department !== 'OHE') return false;
+    if (filterDept === 'TRACK' && t.department !== 'TRACK') return false;
+    if (filterDept === 'OHE' && t.department !== 'OHE') return false;
+    if (filterDept === 'SIG' && t.department !== 'SIG') return false;
     if (filterDept === 'Critical' && t.claimed_criticality < 4) return false;
     if (filterDept === 'Overdue' && !t.overdue) return false;
 
@@ -165,9 +165,9 @@ export default function TaskPool() {
                 <span className="material-symbols-outlined text-on-tertiary-container text-[16px]">domain</span>
               </div>
               <div className="flex items-baseline gap-space-xs mt-space-xs font-code-sm text-code-sm">
-                <span className="text-on-surface font-bold">{loading ? '—' : engTasks.length} ENG</span> •
-                <span className="text-on-surface font-bold">{loading ? '—' : sntTasks.length} S&amp;T</span> •
-                <span className="text-on-surface font-bold">{loading ? '—' : elecTasks.length} ELEC</span>
+                <span className="text-on-surface font-bold">{loading ? '—' : trackTasks.length} TRACK</span> •
+                <span className="text-on-surface font-bold">{loading ? '—' : oheTasks.length} OHE</span> •
+                <span className="text-on-surface font-bold">{loading ? '—' : sigTasks.length} SIG</span>
               </div>
               <div className="w-full bg-surface-container h-1 rounded-full overflow-hidden mt-space-xs">
                 <div className="bg-tertiary-container h-full w-full"></div>
@@ -179,7 +179,7 @@ export default function TaskPool() {
         {/* Filter Bar & Search */}
         <div className="px-gutter pt-space-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-space-sm">
           <div className="flex items-center gap-space-xs overflow-x-auto no-scrollbar">
-            {['All', 'Engineering', 'S&T', 'Electrical', 'Critical', 'Overdue'].map((d) => (
+            {['All', 'TRACK', 'OHE', 'SIG', 'Critical', 'Overdue'].map((d) => (
               <button
                 key={d}
                 onClick={() => setFilterDept(d)}

@@ -168,7 +168,7 @@ def build_block_windows(
     Enforces HARD passenger train conflicts and SOFT freight train conflicts.
     """
     if base_date is None:
-        base_date = datetime(2026, 9, 15, 0, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     blocks: list[BlockWindow] = []
     seg_list = segments or ["DEFAULT_SEG"]
@@ -253,7 +253,7 @@ def optimize(
     Delegates scheduling to Optimization.optimize_schedule().
     """
     if base_date is None:
-        base_date = datetime(2026, 9, 15, 0, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     log.info("Layer 3 Adapter optimize called policy=%s tasks=%d horizon=%dd", policy, len(tasks), horizon_days)
 

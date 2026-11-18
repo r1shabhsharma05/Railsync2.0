@@ -342,7 +342,7 @@ def generate_timetable_slots(
     Each slot represents a time window where a segment is occupied by a train.
     """
     if base_date is None:
-        base_date = datetime(2026, 9, 15, 0, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     slots = []
     for day_offset in range(days):
@@ -386,7 +386,7 @@ def generate_maintenance_blocks(
     4. Are at least 2 hours long for meaningful maintenance work
     """
     if base_date is None:
-        base_date = datetime(2026, 9, 15, 0, 0, 0)
+        base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     segments = set()
     for slot in timetable_slots:
@@ -489,7 +489,7 @@ async def get_full_timetable_with_blocks(
     trains = timetable_result["trains"]
 
     # 2. Generate concrete timetable slots
-    base_date = datetime(2026, 9, 15, 0, 0, 0)
+    base_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     slots = generate_timetable_slots(trains, base_date=base_date, days=days)
 
     # 3. Generate optimized maintenance blocks
@@ -530,7 +530,7 @@ async def get_full_timetable_with_blocks(
                 "priority": s["priority"],
                 "source": s.get("source", "fixture"),
             }
-            for s in slots[:200]  # Limit to prevent huge payloads
+            for s in slots  # Full passage list — the What-If conflict check needs every passage, not a sample
         ],
         "maintenance_blocks": maintenance_blocks,
         "summary": {

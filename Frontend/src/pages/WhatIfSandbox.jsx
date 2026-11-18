@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 
 export default function WhatIfSandbox() {
   const [segments, setSegments] = useState([]);
   const [loadingSegs, setLoadingSegs] = useState(true);
+  const [timetableSlots, setTimetableSlots] = useState([]);
   const [targetSegment, setTargetSegment] = useState('');
   const [scenarioType, setScenarioType] = useState('track_defect');
   const [severity, setSeverity] = useState('critical');
@@ -27,7 +28,35 @@ export default function WhatIfSandbox() {
       }
     }
     loadSegs();
+    // Published timetable passages, for checking Plan B windows against
+    // real train movements. Loads independently — a timetable failure
+    // must not block the segment list.
+    api.getLiveTimetable(7)
+      .then((data) => setTimetableSlots(data?.timetable_slots || []))
+      .catch((err) => console.error('Failed to load timetable:', err));
   }, []);
+
+  // Trains whose published passages overlap a Plan B block window on the
+  // same segment — computed from the timetable, never asserted. Null while
+  // the timetable hasn't loaded, so a missing check never reads as zero.
+  const planBConflicts = useMemo(() => {
+    if (!simulationResult?.assignments?.length || timetableSlots.length === 0) return null;
+    const trains = new Set();
+    for (const a of simulationResult.assignments) {
+      if (!a.block_start || !a.block_end) continue;
+      const bs = new Date(a.block_start).getTime();
+      const be = new Date(a.block_end).getTime();
+      if (Number.isNaN(bs) || Number.isNaN(be)) continue;
+      for (const s of timetableSlots) {
+        if (s.segment_id !== a.segment_id) continue;
+        const ss = new Date(s.start).getTime();
+        const se = new Date(s.end).getTime();
+        if (Number.isNaN(ss) || Number.isNaN(se)) continue;
+        if (ss < be && bs < se) trains.add(s.train_number);
+      }
+    }
+    return trains.size;
+  }, [simulationResult, timetableSlots]);
 
   const handleReOptimize = async () => {
     if (reOptState !== 'idle') return;
@@ -254,12 +283,12 @@ export default function WhatIfSandbox() {
               </div>
 
               <div className="p-space-sm bg-surface-container-low rounded flex flex-col border border-surface-container">
-                <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Passenger Trains Delayed</span>
-                <span className="font-headline-lg text-headline-lg text-tertiary font-bold">
-                  0 Min
+                <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Passenger Train Conflicts</span>
+                <span className={`font-headline-lg text-headline-lg font-bold ${planBConflicts === 0 ? 'text-tertiary' : 'text-error'}`}>
+                  {planBConflicts == null ? '—' : planBConflicts}
                 </span>
-                <span className="font-code-sm text-code-sm text-tertiary font-semibold">
-                  Zero Passenger Impact (Hard Constraint)
+                <span className="font-code-sm text-code-sm text-on-surface-variant">
+                  Timetabled trains overlapping Plan B windows
                 </span>
               </div>
             </div>

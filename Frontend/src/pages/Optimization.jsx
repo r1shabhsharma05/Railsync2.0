@@ -28,15 +28,13 @@ export default function Optimization() {
   const [totalTasks, setTotalTasks] = useState(null);
   const [toastMsg, setToastMsg] = useState(null);
 
-  // Load existing current plan on mount
+  // Load the current plan on mount. The plan and the task count load
+  // independently: the table renders from /plan/current the moment it
+  // arrives instead of waiting on the 602-task payload too.
   useEffect(() => {
-    async function loadCurrent() {
+    async function loadPlan() {
       try {
-        const [plan, tasks] = await Promise.all([
-          api.getCurrentPlan('weekly'),
-          api.getTasks(),
-        ]);
-        if (Array.isArray(tasks)) setTotalTasks(tasks.length);
+        const plan = await api.getCurrentPlan('weekly');
         if (plan) {
           setOptResult({
             run_id: plan.optimization_run_id || 'OPT-BASELINE',
@@ -44,18 +42,28 @@ export default function Optimization() {
             status: plan.status || 'optimal',
             total_assignments: plan.assignments?.length ?? 0,
             assignments: plan.assignments || [],
-            // No solver objective / robustness / runtime in the plan payload —
-            // shown as '—' until a real run returns them.
-            objective_values: null,
-            robustness_score: null,
-            execution_time_ms: null,
+            // Solver runtime / robustness come from the plan's OptimizationRun
+            // row — real values, not placeholders.
+            objective_values: plan.objective_values ?? null,
+            robustness_score: plan.robustness_score ?? null,
+            execution_time_ms: plan.execution_time_ms ?? null,
+            unresolved_conflicts: plan.unresolved_conflicts || plan.conflicts || [],
           });
         }
       } catch (err) {
         console.error('Failed to load current plan:', err);
       }
     }
-    loadCurrent();
+    async function loadTaskCount() {
+      try {
+        const tasks = await api.getTasks();
+        if (Array.isArray(tasks)) setTotalTasks(tasks.length);
+      } catch (err) {
+        console.error('Failed to load task count:', err);
+      }
+    }
+    loadPlan();
+    loadTaskCount();
   }, []);
 
   const handleRunOptimizer = async () => {
@@ -214,13 +222,13 @@ export default function Optimization() {
             <span className="font-headline-lg text-headline-lg text-on-surface font-bold my-1">
               {optResult?.execution_time_ms ? `${optResult.execution_time_ms}ms` : '—'}
             </span>
-            <span className="font-code-sm text-code-sm text-on-tertiary-container">Sub-5s Realtime Guarantee</span>
+            <span className="font-code-sm text-code-sm text-on-tertiary-container">Per-horizon solver time</span>
           </div>
 
           <div className="bg-surface-container-lowest p-space-md rounded-lg shadow-sm flex flex-col">
             <span className="font-label-caps text-label-caps text-on-surface-variant uppercase">Passenger Conflicts</span>
             <span className="font-headline-lg text-headline-lg text-on-tertiary-container font-bold my-1">
-              0
+              {optResult?.unresolved_conflicts?.length ?? '—'}
             </span>
             <span className="font-code-sm text-code-sm text-on-tertiary-container">Hard Constraint Strict</span>
           </div>
@@ -258,18 +266,26 @@ export default function Optimization() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container-high font-code-sm text-code-sm">
-                {(optResult?.assignments || []).slice(0, 10).map((a) => (
-                  <tr key={a.id || a.task_id} className="hover:bg-surface-container-low">
-                    <td className="py-space-sm px-space-sm font-bold text-primary">{a.task_id}</td>
-                    <td className="py-space-sm px-space-sm font-semibold">{a.segment_id}</td>
-                    <td className="py-space-sm px-space-sm">{a.department}</td>
-                    <td className="py-space-sm px-space-sm">{a.duration_hrs}h</td>
-                    <td className="py-space-sm px-space-sm font-bold">{a.priority ? a.priority.toFixed(1) : '85.0'}</td>
-                    <td className="py-space-sm px-space-sm text-on-surface-variant">
-                      {a.reason || 'Assigned to optimal window avoiding passenger disruption'}
+                {optResult == null ? (
+                  <tr>
+                    <td colSpan={6} className="py-space-md px-space-sm text-center text-on-surface-variant">
+                      Loading plan…
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  (optResult.assignments || []).slice(0, 10).map((a) => (
+                    <tr key={a.id || a.task_id} className="hover:bg-surface-container-low">
+                      <td className="py-space-sm px-space-sm font-bold text-primary">{a.task_id}</td>
+                      <td className="py-space-sm px-space-sm font-semibold">{a.segment_id}</td>
+                      <td className="py-space-sm px-space-sm">{a.department}</td>
+                      <td className="py-space-sm px-space-sm">{a.duration_hrs}h</td>
+                      <td className="py-space-sm px-space-sm font-bold">{a.priority ? a.priority.toFixed(1) : '85.0'}</td>
+                      <td className="py-space-sm px-space-sm text-on-surface-variant">
+                        {a.reason || 'Assigned to optimal window avoiding passenger disruption'}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

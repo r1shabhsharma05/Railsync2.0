@@ -88,7 +88,7 @@ export default function PredictAndOptimize() {
     } else {
       setFormData({
         task_id: nextTaskId,
-        division: 'Kota',
+        division: 'Agra',
         asset_type: 'S&T',
         age_years: 15,
         installation_year: 2011,
@@ -99,7 +99,7 @@ export default function PredictAndOptimize() {
         task_type: 'signal_maintenance',
         claimed_criticality: 2,
         min_duration_hrs: 1.5,
-        section: 'KOTA-Sec5',
+        section: 'AGC-Sec5',
       });
     }
   };
@@ -284,10 +284,6 @@ export default function PredictAndOptimize() {
                 >
                   <option value="Delhi">Delhi</option>
                   <option value="Agra">Agra</option>
-                  <option value="Kota">Kota</option>
-                  <option value="Ratlam">Ratlam</option>
-                  <option value="Vadodara">Vadodara</option>
-                  <option value="Mumbai">Mumbai</option>
                 </select>
               </div>
               <div>
