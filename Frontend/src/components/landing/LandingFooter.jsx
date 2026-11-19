@@ -12,19 +12,19 @@ const APP_LINKS = [
 
 const SECTION_LINKS = [
   { label: 'The Problem',   href: '#problem'      },
-  { label: 'How It Works',  href: '#pipeline'     },
+  { label: 'How It Works',  href: '#how-it-works' },
   { label: 'Capabilities',  href: '#capabilities' },
   { label: 'Digital Twin',  href: '#digital-twin' },
   { label: 'What-If',       href: '#what-if'      },
 ];
 
 /**
- * Footer — a designed close: the name returns at full width on a dark
- * surface, then plain links, the prototype note, and the picture credits.
+ * Footer — the name returns at full width on the dusk, then plain links,
+ * the prototype note, and the picture credits.
  */
 export default function LandingFooter() {
   return (
-    <footer className="rs-dark bg-[var(--dark)] text-[var(--ink)]">
+    <footer className="bg-[var(--dusk-1)] border-t border-[var(--line)]">
       <div className="rs-wrap pt-16 pb-8">
         <div className="flex items-center gap-4 mb-10">
           <img
@@ -33,13 +33,13 @@ export default function LandingFooter() {
             className="h-12 w-12 object-contain"
             onError={(e) => { e.currentTarget.src = '/railsync-logo.png'; }}
           />
-          <span className="font-wordmark leading-none text-[clamp(64px,12vw,180px)] text-[var(--ink)]">
+          <span className="font-wordmark leading-none text-[clamp(64px,12vw,180px)] text-[var(--text)]">
             RAILSYNC
           </span>
         </div>
 
         <div className="flex flex-col md:flex-row gap-10 md:gap-16 pb-10">
-          <p className="text-[16px] leading-[1.6] max-w-[52ch]">
+          <p className="text-[16px] leading-[1.6] text-[var(--text-dim)] max-w-[52ch]">
             RailSync is a prototype system for AI-driven railway maintenance
             planning, combining predictive risk intelligence, conflict
             detection, and constraint-based optimisation using Google OR-Tools
@@ -48,11 +48,11 @@ export default function LandingFooter() {
           </p>
 
           <div>
-            <div className="text-[15px] font-semibold mb-3">Application</div>
+            <div className="text-[15px] font-semibold text-[var(--text)] mb-3">Application</div>
             <ul className="space-y-2">
               {APP_LINKS.map((l) => (
                 <li key={l.label}>
-                  <Link to={l.to} className="text-[15px] text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+                  <Link to={l.to} className="text-[15px] text-[var(--text-dim)] hover:text-[var(--text)] transition-colors">
                     {l.label}
                   </Link>
                 </li>
@@ -61,11 +61,11 @@ export default function LandingFooter() {
           </div>
 
           <div>
-            <div className="text-[15px] font-semibold mb-3">Sections</div>
+            <div className="text-[15px] font-semibold text-[var(--text)] mb-3">Sections</div>
             <ul className="space-y-2">
               {SECTION_LINKS.map((l) => (
                 <li key={l.label}>
-                  <a href={l.href} className="text-[15px] text-[var(--muted)] hover:text-[var(--ink)] transition-colors">
+                  <a href={l.href} className="text-[15px] text-[var(--text-dim)] hover:text-[var(--text)] transition-colors">
                     {l.label}
                   </a>
                 </li>
@@ -74,14 +74,14 @@ export default function LandingFooter() {
           </div>
         </div>
 
-        <p className="text-[13px] leading-[1.6] text-[var(--muted)] pb-6">
+        <p className="text-[13px] leading-[1.6] text-[var(--text-dim)] pb-6">
           Pictures: <a className="underline" href="https://commons.wikimedia.org/w/index.php?curid=46585669">“Close-up of railway track”</a> by Jules Grandgagnage, <a className="underline" href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, via Wikimedia Commons; <a className="underline" href="https://commons.wikimedia.org/w/index.php?curid=83485729">“Wadi Rum railway track, Hejaz railway, Jordan”</a> by Vyacheslav Argenberg, <a className="underline" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, via Wikimedia Commons.
         </p>
 
-        <div className="pt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[13px] text-[var(--muted)]">
+        <div className="pt-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[13px] text-[var(--text-dim)]">
           {/* One string, so the spaces survive JSX whitespace handling. */}
           <span>{`© ${new Date().getFullYear()} RailSync. Prototype / research system — not a production deployment.`}</span>
-          <span className="font-semibold text-[var(--ink)]">
+          <span className="font-semibold text-[var(--text)]">
             Predict · Detect · Optimise · Explain · Replan
           </span>
         </div>

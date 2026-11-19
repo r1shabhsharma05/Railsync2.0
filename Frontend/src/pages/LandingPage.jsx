@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import '../components/landing/landingAnimations.css';
+import '../components/landing/landingTheme.css';
 import LandingAnnouncement  from '../components/landing/LandingAnnouncement.jsx';
 import LandingNavbar        from '../components/landing/LandingNavbar.jsx';
 import LandingHero          from '../components/landing/LandingHero.jsx';

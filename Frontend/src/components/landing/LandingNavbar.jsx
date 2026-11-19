@@ -5,32 +5,30 @@ import { LigIcon } from "./icons";
 
 const NAV_LINKS = [
   { label: 'Problem',      href: '#problem'      },
-  { label: 'Pipeline',     href: '#pipeline'     },
+  { label: 'Pipeline',     href: '#how-it-works' },
   { label: 'Capabilities', href: '#capabilities' },
   { label: 'Digital Twin', href: '#digital-twin' },
   { label: 'What-If',      href: '#what-if'      },
 ];
 
 /**
- * Navigation — Adomate's nav, RailSync's brand: wordmark left, text links
- * centre, Sign in + a tangerine pill + an outline pill on the right.
- * The navbar is in normal flow under the announcement bar (the hero is
- * light, so no absolute overlay is needed).
+ * Navigation — sticky glass over the dusk page: wordmark left, text links
+ * centre, Sign in + a sunset pill + a ghost pill on the right.
  */
 export default function LandingNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="relative z-50 bg-[var(--bg)]">
-      <div className="rs-wrap flex items-center justify-between py-5">
-        <Link to="/" className="flex items-center gap-2.5 select-none">
+    <header className="sticky top-0 z-50 bg-[rgba(13,7,22,0.72)] backdrop-blur-[18px] border-b border-[var(--line-soft)]">
+      <div className="rs-wrap flex items-center justify-between py-4">
+        <Link to="/" className="flex items-center gap-2.5 select-none min-h-[44px]">
           <img
             src={railSyncLogo}
             alt="RailSync"
             className="h-8 w-8 object-contain"
             onError={(e) => { e.currentTarget.src = '/railsync-logo.png'; }}
           />
-          <span className="font-wordmark text-[22px] leading-none text-[var(--ink)]">
+          <span className="font-wordmark text-[22px] leading-none text-[var(--text)]">
             RAILSYNC
           </span>
         </Link>
@@ -40,7 +38,7 @@ export default function LandingNavbar() {
             <a
               key={item.href}
               href={item.href}
-              className="text-[15px] font-semibold text-[var(--ink)] hover:text-[var(--muted)] transition-colors"
+              className="text-[15px] font-semibold text-[var(--text)] hover:text-[var(--sakura-soft)] transition-colors py-3"
             >
               {item.label}
             </a>
@@ -50,7 +48,7 @@ export default function LandingNavbar() {
         <div className="hidden sm:flex items-center gap-4">
           <Link
             to="/login"
-            className="text-[15px] font-semibold text-[var(--ink)] hover:text-[var(--muted)] transition-colors"
+            className="text-[15px] font-semibold text-[var(--text)] hover:text-[var(--sakura-soft)] transition-colors py-3"
           >
             Sign in
           </Link>
@@ -63,8 +61,9 @@ export default function LandingNavbar() {
         </div>
 
         <button
+          type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden p-2 text-[var(--ink)]"
+          className="lg:hidden h-11 w-11 flex items-center justify-center text-[var(--text)]"
           aria-label="Toggle navigation menu"
           aria-expanded={mobileOpen}
         >
@@ -73,14 +72,14 @@ export default function LandingNavbar() {
       </div>
 
       {mobileOpen && (
-        <div className="lg:hidden bg-[var(--surface)] border-t border-[var(--edge)]">
+        <div className="lg:hidden bg-[var(--dusk-1)] border-t border-[var(--line-soft)]">
           <div className="rs-wrap py-4 flex flex-col gap-1">
             {NAV_LINKS.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className="text-[17px] font-semibold text-[var(--ink)] py-2"
+                className="text-[17px] font-semibold text-[var(--text)] min-h-[44px] flex items-center"
               >
                 {item.label}
               </a>

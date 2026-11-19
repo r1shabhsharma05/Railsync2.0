@@ -42,14 +42,13 @@ const POINTS = [
 ];
 
 /**
- * Digital twin — Adomate's lime feature section, RailSync's tangerine.
- * Copy on the left (eyebrow, headline, two hairline-divided points), the
- * live twin fragment on the right. Mention a segment ID and the twin
- * follows. The fragment is the product's dark UI on the tangerine field.
+ * Digital twin — copy on the left (eyebrow, headline, two hairline-divided
+ * points), the live twin fragment on the right. Mention a segment ID and
+ * the twin follows.
  */
 export default function LandingDigitalTwin() {
   const sectionRef = useScrollReveal();
-  const { top3, loading, error } = useLiveRiskSegments();
+  const { top3, loading, error, refetch } = useLiveRiskSegments();
   const [request, setRequest] = useState(
     'Paste a maintenance request mentioning a segment ID.',
   );
@@ -76,25 +75,25 @@ export default function LandingDigitalTwin() {
   };
 
   return (
-    <section id="digital-twin" className="rs-accent bg-[var(--accent)]">
+    <section id="digital-twin" className="bg-[var(--dusk-0)]">
       <div ref={sectionRef} className="rs-reveal rs-wrap py-20 md:py-28 grid md:grid-cols-2 gap-10 md:gap-14 items-center">
         {/* Copy */}
         <div>
           <p className="rs-eyebrow">Digital twin</p>
-          <h2 className="font-display rs-head leading-[0.95] text-[var(--ink)] mt-5">
+          <h2 className="font-display rs-head leading-[0.95] text-[var(--text)] mt-5">
             Every segment scored, every risk visible.
           </h2>
-          <p className="mt-5 text-[17px] leading-[1.6] text-[var(--ink)] max-w-[46ch]">
+          <p className="mt-5 text-[17px] leading-[1.6] text-[var(--text-dim)] max-w-[46ch]">
             The corridor as a living map: every segment, task and block in one
             view, before a single block is booked.
           </p>
           <div className="mt-8">
             {POINTS.map((p) => (
-              <div key={p.title} className="py-5 border-t border-[rgba(31,43,77,0.25)] last:border-b">
-                <h3 className="font-display text-[20px] leading-[1.1] text-[var(--ink)]">
+              <div key={p.title} className="py-5 border-t border-[var(--line-soft)] last:border-b">
+                <h3 className="font-display text-[20px] leading-[1.1] text-[var(--text)]">
                   {p.title}
                 </h3>
-                <p className="mt-1.5 text-[15px] leading-[1.6] text-[var(--muted)] max-w-[48ch]">
+                <p className="mt-1.5 text-[15px] leading-[1.6] text-[var(--text-dim)] max-w-[48ch]">
                   {p.detail}
                 </p>
               </div>
@@ -104,7 +103,7 @@ export default function LandingDigitalTwin() {
 
         {/* Twin fragment */}
         <div>
-          <p className="text-[16px] leading-[1.6] text-[var(--ink)] max-w-[40ch] mb-5">
+          <p className="text-[16px] leading-[1.6] text-[var(--text)] max-w-[40ch] mb-5">
             Paste a maintenance request. The twin maps it to the corridor.
           </p>
           <div data-ui className="rs-frag w-full max-w-[520px] p-5">
@@ -123,15 +122,22 @@ export default function LandingDigitalTwin() {
               aria-label="Maintenance request"
               rows={3}
               spellCheck={false}
-              className="w-full bg-transparent text-white text-[16px] leading-[1.5] border border-white/25 p-3 outline-none focus-visible:outline-white resize-none mb-4"
+              className="w-full bg-transparent text-[var(--ink)] text-[16px] leading-[1.5] border border-[#22304d] rounded-lg p-3 resize-none mb-4"
             />
 
-            {loading || error ? (
-              <p className="text-[15px] leading-[1.5] text-[var(--muted)] mb-4">
-                {error
-                  ? 'Live segment data could not be loaded — see the dashboard for current values.'
-                  : 'Loading live segment data…'}
-              </p>
+            {error ? (
+              <div className="rs-banner mb-4">
+                <span>Live segment data could not be loaded — see the dashboard for current values.</span>
+                <button type="button" onClick={refetch}>
+                  Try again
+                </button>
+              </div>
+            ) : loading ? (
+              <div className="grid grid-cols-3 gap-2 mb-4" aria-hidden="true">
+                <div className="rs-skel h-[92px]" />
+                <div className="rs-skel h-[92px]" />
+                <div className="rs-skel h-[92px]" />
+              </div>
             ) : (
               <>
                 <div className="grid grid-cols-3 gap-2 mb-4" role="tablist" aria-label="Highest-risk segments">
@@ -143,10 +149,10 @@ export default function LandingDigitalTwin() {
                         role="tab"
                         aria-selected={selected === s.segment_id}
                         onClick={() => setSelected(s.segment_id)}
-                        className={`text-left p-3 border cursor-pointer transition-colors ${
+                        className={`text-left p-3 border rounded-lg cursor-pointer transition-colors ${
                           selected === s.segment_id
-                            ? 'bg-[#22304d] border-[#e8ecf5]'
-                            : 'bg-transparent border-[var(--ui-edge)] hover:border-[var(--muted)]'
+                            ? 'bg-[#22304d] border-[var(--sakura-soft)]'
+                            : 'bg-transparent border-[#22304d] hover:border-[var(--muted)]'
                         }`}
                       >
                         <span className="block text-[13px] font-semibold text-[var(--ink)] mb-1">
@@ -155,7 +161,7 @@ export default function LandingDigitalTwin() {
                         <span className="block text-[13px] text-[var(--muted)] mb-2">
                           {s.division ? `${s.division} division` : 'Corridor'}
                         </span>
-                        <span className="block h-1.5 w-full bg-[var(--ui-edge)] overflow-hidden">
+                        <span className="block h-1.5 w-full bg-[#22304d] overflow-hidden">
                           <span
                             className="block h-full"
                             style={{ width: `${(risk * 100).toFixed(1)}%`, background: tierColor(risk) }}
@@ -200,7 +206,7 @@ export default function LandingDigitalTwin() {
               </>
             )}
           </div>
-          <p className="mt-4 text-[15px] leading-[1.5] text-[var(--muted)] max-w-[40ch]">
+          <p className="mt-4 text-[15px] leading-[1.5] text-[var(--text-dim)] max-w-[40ch]">
             Click a segment — or mention its ID in the request — and the twin follows.
           </p>
         </div>

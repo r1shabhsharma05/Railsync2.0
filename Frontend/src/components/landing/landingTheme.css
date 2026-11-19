@@ -1,0 +1,364 @@
+/* RailSync landing — v8: "The corridor at golden hour, planned live."
+   The Sakura Sunset Railway scene is the hero and the world: the whole
+   page sits on the scene's dusk (plum base #1c1230), lit by its sunset
+   (sakura pink, copper, signal red). League Spartan display, Figtree text,
+   Hey Comic kept for the RAILSYNC wordmark. Buttons are pills because the
+   scene's own UI is a liquid-glass pill. Cards on flat ground are solid
+   dusk, never glass — glass only where the scene sits behind it.
+   Motion tokens from the UI Motion Kit: enter 220ms ease-out, exit 160ms
+   ease-in, easings out [0.2,0.8,0.2,1] / in [0.4,0,1,1] / inOut [0.65,0,0.35,1].
+   UI states per the 35-states guide: skeletons that match the shape of
+   what loads, plain-language errors with a retry, hover/focus/pressed on
+   every control, 4.5:1 text, reduced motion keeps content, drops travel. */
+
+@font-face {
+  font-family: 'League Spartan';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/league-spartan-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/figtree-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Figtree';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/figtree-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Hey Comic';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/hey-comic.ttf') format('truetype');
+}
+
+:root {
+  /* The scene's own tokens (read by SakuraScene via getComputedStyle) */
+  --sun: rgba(255, 238, 190, .9);
+  --sun0: rgba(255, 170, 110, 0);
+  --lamp: rgba(255, 248, 215, .95);
+  --lamp0: rgba(255, 230, 160, 0);
+  --signal: rgba(255, 60, 50, .95);
+  --signal0: rgba(255, 40, 30, 0);
+  --base: #1c1230;
+  --under-top: #3a2468;
+  --under-hor: #8a5a3c;
+  --under-low: #33262f;
+
+  /* Dusk system */
+  --dusk-0: #0d0716;
+  --dusk-1: #1c1230;
+  --dusk-2: #271845;
+  --dusk-3: #33205c;
+  --line: rgba(255, 214, 232, .16);
+  --line-soft: rgba(255, 214, 232, .09);
+  --sakura: #ff6fb5;
+  --sakura-soft: #ffd6e8;
+  --sunset: #ffb36b;
+  --copper: #ffaa5f;
+  --accent: #ffaa5f;
+  --text: #fbe6ee;
+  --text-dim: rgba(251, 230, 238, .74);
+  --text-faint: rgba(251, 230, 238, .52);
+  --ink-on-sunset: #241233;
+  --glass-bg: rgba(255, 255, 255, .1);
+  --glass-edge: rgba(255, 255, 255, .26);
+  --glass-hi: rgba(255, 255, 255, .4);
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+  --step-hero: clamp(52px, 5.2vw, 88px);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+.rs-page {
+  font-family: 'Figtree', system-ui, sans-serif;
+  background: var(--dusk-0);
+  color: var(--text);
+}
+
+.rs-page ::selection {
+  background: var(--sakura);
+  color: var(--ink-on-sunset);
+}
+
+.font-display {
+  font-family: 'League Spartan', 'Figtree', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.font-wordmark {
+  font-family: 'Hey Comic', 'League Spartan', system-ui, sans-serif;
+  font-weight: 400;
+}
+
+.rs-hero-h1 {
+  font-size: var(--step-hero);
+}
+.rs-head {
+  font-size: var(--step-head);
+}
+
+.rs-wrap {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 40px;
+}
+
+@media (max-width: 640px) {
+  .rs-wrap {
+    padding-inline: 20px;
+  }
+}
+
+/* Focus is never removed, only replaced with a visible ring. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--sakura);
+  outline-offset: 2px;
+}
+
+/* ── Buttons: pills, because the scene's own UI is a glass pill.
+   Primary = sunset solid with dusk ink (contrast > 7:1). Ghost = glass
+   border. Hover darkens, pressed settles, focus rings in sakura. ─────── */
+.rs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  background: var(--sunset);
+  color: var(--ink-on-sunset);
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1;
+  padding: 15px 26px;
+  border: 1px solid var(--sunset);
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 220ms var(--ease-out), border-color 220ms var(--ease-out), transform 120ms var(--ease-out);
+}
+.rs-btn:hover {
+  background: var(--copper);
+  border-color: var(--copper);
+}
+.rs-btn:active {
+  transform: scale(0.98);
+}
+.rs-btn-glass {
+  background: var(--glass-bg);
+  border-color: var(--glass-edge);
+  color: var(--text);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+}
+.rs-btn-glass:hover {
+  background: rgba(255, 255, 255, .16);
+  border-color: rgba(255, 255, 255, .36);
+}
+.rs-btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text);
+}
+.rs-btn-ghost:hover {
+  border-color: var(--text-faint);
+  background: rgba(255, 214, 232, .06);
+}
+
+/* ── Surfaces ──────────────────────────────────────────────────────────────
+   Solid dusk cards on flat ground; glass only over the scene. */
+.rs-card {
+  background: var(--dusk-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.rs-glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-edge);
+  border-radius: 16px;
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+}
+/* Product fragments keep the dashboard's dark sheet language. */
+.rs-frag {
+  --ink: #e8ecf5;
+  --muted: #93a0b8;
+  background: #0f1729;
+  border: 1px solid #22304d;
+  border-radius: 16px;
+  color: var(--ink);
+}
+.rs-frag-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+.rs-frag-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.rs-frag-mono {
+  font-variant-numeric: tabular-nums;
+}
+.rs-risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* ── Eyebrow: sentence case, small, dim. No dot, no tracking games. ─────── */
+.rs-eyebrow {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sakura-soft);
+}
+
+/* ── Skeletons: same shape as what loads, gentle shimmer. ───────────────── */
+@keyframes rs-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.rs-skel {
+  border-radius: 8px;
+  background: linear-gradient(100deg, rgba(255, 214, 232, .07) 40%, rgba(255, 214, 232, .16) 50%, rgba(255, 214, 232, .07) 60%);
+  background-size: 200% 100%;
+  animation: rs-shimmer 1.6s linear infinite;
+}
+
+/* ── Error banner: plain words, one retry. ──────────────────────────────── */
+.rs-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  background: rgba(255, 60, 50, .1);
+  border: 1px solid rgba(255, 60, 50, .45);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.rs-banner button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--sakura-soft);
+  background: transparent;
+  border: 1px solid rgba(255, 214, 232, .4);
+  border-radius: 999px;
+  padding: 6px 14px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.rs-banner button:hover {
+  background: rgba(255, 214, 232, .1);
+}
+
+/* ── Reveal: content visible by default; hidden only once JS runs. ──────── */
+.rs-js .rs-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 600ms var(--ease-out), transform 600ms var(--ease-out);
+}
+.rs-js .rs-reveal.rs-revealed {
+  opacity: 1;
+  transform: none;
+}
+.rs-js .rs-stagger-1 { transition-delay: 70ms; }
+.rs-js .rs-stagger-2 { transition-delay: 140ms; }
+.rs-js .rs-stagger-3 { transition-delay: 210ms; }
+.rs-js .rs-stagger-4 { transition-delay: 280ms; }
+
+/* ── Hero: the scene is the stage; the scrim keeps text readable. ───────── */
+.rs-hero-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(13, 7, 22, .78) 0%, rgba(13, 7, 22, .42) 46%, rgba(13, 7, 22, 0) 72%),
+    linear-gradient(0deg, rgba(13, 7, 22, .72) 0%, rgba(13, 7, 22, 0) 34%);
+}
+.rs-hero-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 78% 72% at 50% 50%, transparent 55%, rgba(0, 0, 0, .5));
+}
+@media (max-width: 767px) {
+  .rs-hero-scrim {
+    background:
+      linear-gradient(0deg, rgba(13, 7, 22, .88) 0%, rgba(13, 7, 22, .5) 52%, rgba(13, 7, 22, .18) 78%),
+      linear-gradient(90deg, rgba(13, 7, 22, .55) 0%, rgba(13, 7, 22, 0) 80%);
+  }
+}
+.rs-glass-pill {
+  position: absolute;
+  left: 50%;
+  bottom: 5%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 10px 22px;
+  border-radius: 999px;
+  font-size: 15px;
+  white-space: nowrap;
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 1px 0 var(--glass-hi);
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+  color: var(--text);
+}
+
+/* ── Number ticker: tabular, counts up once when seen. ──────────────────── */
+.rs-ticker {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Reduced motion: content stays, travel goes. ────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rs-js .rs-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .rs-btn {
+    transition: none;
+  }
+  .rs-btn:active {
+    transform: none;
+  }
+  .rs-skel {
+    animation: none;
+  }
+  .rs-glass-pill {
+    transition: none;
+  }
+}

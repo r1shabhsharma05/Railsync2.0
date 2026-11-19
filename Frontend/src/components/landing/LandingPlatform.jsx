@@ -3,7 +3,7 @@ import { useScrollReveal } from './useScrollReveal';
 import { useLiveRiskSegments, tierColor } from './useLiveRiskSegments';
 
 /**
- * The Platform — Adomate's centred intro + three numbered cards.
+ * The Platform — left-aligned intro + three numbered cards.
  * Three steps, each with a small dark fragment of the product at the foot:
  * the risk bars, the request card, the reason for a block.
  */
@@ -33,11 +33,23 @@ function useStepVisuals() {
   const live = (format) =>
     top1 ? format(top1) : error ? 'Unavailable' : 'Loading…';
 
-  const riskBars = loading || error ? (
+  const riskBars = error ? (
     <div data-ui className="rs-frag p-4 mt-5">
       <p className="text-[13px] leading-[1.5] text-[var(--muted)]">
-        {error ? 'Live risk unavailable.' : 'Loading live risk…'}
+        Live risk unavailable.
       </p>
+    </div>
+  ) : loading ? (
+    <div data-ui className="rs-frag p-4 mt-5" aria-hidden="true">
+      <div className="space-y-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex items-center gap-3">
+            <span className="rs-skel h-3 w-[86px] shrink-0" />
+            <span className="rs-skel h-1.5 flex-1" />
+            <span className="rs-skel h-3 w-8 shrink-0" />
+          </div>
+        ))}
+      </div>
     </div>
   ) : (
     <div data-ui className="rs-frag p-4 mt-5">
@@ -49,7 +61,7 @@ function useStepVisuals() {
               <span className="w-[86px] shrink-0 text-[12px] font-semibold text-[var(--ink)]">
                 {s.segment_id}
               </span>
-              <span className="block h-1.5 flex-1 bg-[var(--ui-edge)] overflow-hidden">
+              <span className="block h-1.5 flex-1 bg-[#22304d] overflow-hidden">
                 <span
                   className="block h-full"
                   style={{ width: `${(risk * 100).toFixed(1)}%`, background: tierColor(risk) }}
@@ -85,7 +97,7 @@ function useStepVisuals() {
 
   const decisionCard = (
     <div data-ui className="rs-frag p-4 mt-5">
-      <div className="bg-[var(--accent)] text-[var(--accent-ink)] px-3 py-2 text-[14px] font-semibold">
+      <div className="bg-[var(--sunset)] text-[var(--ink-on-sunset)] px-3 py-2 text-[14px] font-semibold">
         {live((s) => `${s.segment_id} · ${s.preventive_block_duration_hrs != null ? `${s.preventive_block_duration_hrs}h block` : 'block'}`)}
       </div>
       <p className="mt-3 text-[13px] leading-[1.5] text-[var(--muted)]">
@@ -102,14 +114,14 @@ export default function LandingPlatform() {
   const visuals = useStepVisuals();
 
   return (
-    <section id="platform" className="bg-[var(--bg)]">
+    <section id="platform" className="bg-[var(--dusk-1)]">
       <div ref={sectionRef} className="rs-reveal rs-wrap py-20 md:py-28">
-        <div className="text-center">
-          <p className="rs-eyebrow justify-center">The platform</p>
-          <h2 className="font-display rs-head leading-[0.95] text-[var(--ink)] max-w-[14em] mx-auto mt-5">
+        <div>
+          <p className="rs-eyebrow">The platform</p>
+          <h2 className="font-display rs-head leading-[0.95] text-[var(--text)] max-w-[14em] mt-5">
             One platform, from prediction to plan.
           </h2>
-          <p className="mt-5 text-[17px] leading-[1.6] text-[var(--muted)] max-w-[52ch] mx-auto">
+          <p className="mt-5 text-[17px] leading-[1.6] text-[var(--text-dim)] max-w-[52ch]">
             An easy-to-use platform to score risk, find feasible windows and
             explain every decision — then re-plan when the week changes.
           </p>
@@ -117,14 +129,14 @@ export default function LandingPlatform() {
 
         <div className="grid md:grid-cols-3 gap-4 mt-14">
           {STEPS.map((s) => (
-            <div key={s.num} className="rs-step-card">
-              <span className="text-[13px] font-semibold text-[var(--muted)]">
+            <div key={s.num} className="rs-card p-5">
+              <span className="text-[13px] font-semibold text-[var(--text-faint)]">
                 {s.num}
               </span>
-              <h3 className="font-display text-[24px] leading-[1.05] text-[var(--ink)] mt-2">
+              <h3 className="font-display text-[24px] leading-[1.05] text-[var(--text)] mt-2">
                 {s.title}
               </h3>
-              <p className="mt-2 text-[15px] leading-[1.6] text-[var(--muted)]">
+              <p className="mt-2 text-[15px] leading-[1.6] text-[var(--text-dim)]">
                 {s.detail}
               </p>
               {visuals[s.num]}

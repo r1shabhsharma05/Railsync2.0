@@ -79,11 +79,13 @@ export function useLiveRiskSegments() {
   const [segments, setSegments] = useState(cachedSegments);
   const [loading, setLoading] = useState(!cachedSegments);
   const [error, setError] = useState(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    if (cachedSegments) return undefined;
+    if (cachedSegments && attempt === 0) return undefined;
     let cancelled = false;
     setLoading(true);
+    setError(null);
     fetchSegments()
       .then((list) => {
         if (!cancelled) {
@@ -100,7 +102,15 @@ export function useLiveRiskSegments() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
+
+  // Error-state retry: drop the cached promise so the next fetch is real.
+  const refetch = () => {
+    segmentsPromise = null;
+    cachedSegments = null;
+    setSegments(null);
+    setAttempt((a) => a + 1);
+  };
 
   const list = segments || [];
   // Stable identities: consumers use top3/top1 in effect deps.
@@ -112,5 +122,6 @@ export function useLiveRiskSegments() {
     top1,
     loading,
     error,
+    refetch,
   };
 }

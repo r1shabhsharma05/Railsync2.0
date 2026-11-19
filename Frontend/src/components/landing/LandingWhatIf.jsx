@@ -27,7 +27,7 @@ const STAGES = [
     text: 'an emergency defect, or a constraint that changes, conflicts with a planned block.',
     evidence: (
       <div data-ui className="rs-frag p-4">
-        <div className="bg-[var(--accent)] text-[var(--accent-ink)] px-3 py-2 text-[15px] font-semibold">
+        <div className="bg-[var(--sunset)] text-[var(--ink-on-sunset)] px-3 py-2 text-[15px] font-semibold rounded-lg">
           Emergency defect — Segment B
         </div>
         <p className="mt-3 text-[13px] leading-[1.5] text-[var(--muted)]">
@@ -87,27 +87,26 @@ const STAGES = [
 ];
 
 /**
- * What-if — Run-in column (product-performs blueprint).
- * One reading column: five paragraphs, each opening with a bold run-in
- * phrase, each followed by one small piece of evidence exactly as wide
- * as the column. The scenario is a demonstration, as the copy says.
+ * What-if — one reading column: five paragraphs, each opening with a bold
+ * run-in phrase, each followed by one small piece of evidence exactly as
+ * wide as the column. The scenario is a demonstration, as the copy says.
  */
 export default function LandingWhatIf() {
   const sectionRef = useScrollReveal();
 
   return (
-    <section id="what-if" className="bg-[var(--bg)]">
+    <section id="what-if" className="bg-[var(--dusk-0)]">
       <div ref={sectionRef} className="rs-reveal rs-wrap py-24 md:py-32">
         <div className="md:ml-[30%] max-w-[600px]">
-          <h2 className="font-display text-[28px] md:text-[32px] leading-[1.1] text-[var(--ink)] mb-12">
+          <h2 className="font-display text-[28px] md:text-[32px] leading-[1.1] text-[var(--text)] mb-12">
             What happens when the plan changes?
           </h2>
 
           <div className="space-y-[56px] md:space-y-[72px]">
             {STAGES.map((s) => (
               <div key={s.runIn}>
-                <p className="text-[17px] md:text-[18px] leading-[1.6] text-[var(--muted)]">
-                  <strong className="font-semibold text-[var(--ink)]">{s.runIn} </strong>
+                <p className="text-[17px] md:text-[18px] leading-[1.6] text-[var(--text-dim)]">
+                  <strong className="font-semibold text-[var(--text)]">{s.runIn} </strong>
                   {s.text}
                 </p>
                 <div className="mt-5">{s.evidence}</div>
